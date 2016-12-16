@@ -1,0 +1,264 @@
+---
+Description: VPC Template
+Conditions:
+  CreateInThreeAZs:
+    Fn::Equals:
+      - Ref: ThreeAZs
+      - 'true'
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VpcCidr
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: Vpc
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: Vpc
+      Tags:
+      - Key: Name
+        Value: PublicRouteTable
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: Vpc
+      Tags:
+      - Key: Name
+        Value: PrivateRouteTable
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      GatewayId:
+        Ref: InternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: Vpc
+      Tags:
+      - Key: Name
+        Value: PrivateRouteTable
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      SubnetId:
+        Ref: PublicSubnetAz1
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      SubnetId:
+        Ref: PublicSubnetAz2
+  SubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: PublicSubnetAz3
+    Condition: CreateInThreeAZs
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      SubnetId:
+        Ref: PublicSubnetAz3
+  PublicSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock:
+        Ref: Az1PublicCidr
+      AvailabilityZone:
+        Ref: VpcAz1
+      Tags:
+      - Key: Name
+        Value: Public Subnet AZ 1
+      - Key: Network
+        Value: public
+  PublicSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock:
+        Ref: Az2PublicCidr
+      AvailabilityZone:
+        Ref: VpcAz2
+      Tags:
+      - Key: Name
+        Value: Public Subnet AZ 2
+      - Key: Network
+        Value: public
+  PublicSubnetAz3:
+    Type: AWS::EC2::Subnet
+    Condition: CreateInThreeAZs
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock:
+        Ref: Az3PublicCidr
+      AvailabilityZone:
+        Ref: VpcAz3
+      Tags:
+      - Key: Name
+        Value: Public Subnet AZ 3
+      - Key: Network
+        Value: Public
+  PrivateSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock:
+        Ref: Az1PrivateCidr
+      AvailabilityZone:
+        Ref: VpcAz1
+      Tags:
+      - Key: Name
+        Value: Private Subnet AZ 1
+      - Key: Network
+        Value: private
+  PrivateSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock:
+        Ref: Az2PrivateCidr
+      AvailabilityZone:
+        Ref: VpcAz2
+      Tags:
+      - Key: Name
+        Value: Private Subnet AZ 2
+      - Key: Network
+        Value: private
+  PrivateSubnetAz3:
+    Type: AWS::EC2::Subnet
+    Condition: CreateInThreeAZs
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock:
+        Ref: Az3PrivateCidr
+      AvailabilityZone:
+        Ref: VpcAz3
+      Tags:
+      - Key: Name
+        Value: Private Subnet AZ 3
+      - Key: Network
+        Value: private
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value:
+      Ref: Vpc
+    Export:
+      Name:
+        !Sub "${AWS::StackName}-VpcID"
+  PublicRouteTable:
+    Description: Public Route Table
+    Value:
+      Ref: PublicRouteTable
+  PublicSubnetAz1:
+    Description: Public Subnet AZ 1
+    Value:
+      Ref: PublicSubnetAz1
+    Export:
+      Name:
+        !Sub "${AWS::StackName}-PublicSubnetAz1"
+  PublicSubnetAz2:
+    Description: Public Subnet AZ 2
+    Value:
+      Ref: PublicSubnetAz2
+    Export:
+      Name:
+        !Sub "${AWS::StackName}-PublicSubnetAz2"
+  PublicSubnetAz3:
+    Description: Public Subnet AZ 3
+    Condition: CreateInThreeAZs
+    Value:
+      Ref: PublicSubnetAz3
+    Export:
+      Name:
+        !Sub "${AWS::StackName}-PublicSubnetAz3"
+  PrivateSubnetAz1:
+    Description: Private Subnet AZ 1
+    Value:
+      Ref: PrivateSubnetAz1
+  PrivateSubnetAz2:
+    Description: Private Subnet AZ 2
+    Value:
+      Ref: PrivateSubnetAz2
+  PrivateSubnetAz3:
+    Description: Private Subnet AZ 3
+    Condition: CreateInThreeAZs
+    Value:
+      Ref: PrivateSubnetAz3
+  InternetGateway:
+    Description: Internet Gateway
+    Value:
+      Ref: InternetGateway
+Parameters:
+  ThreeAZs:
+    Description: Create in 3 zones.
+    Default: 'true'
+    Type: String
+    AllowedValues:
+    - 'true'
+    - 'false'
+    ConstraintDescription: must specify true or false.
+  VpcAz1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: VPC AZ 1
+    Default: ap-southeast-2a
+  VpcAz2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: VPC AZ 2
+    Default: ap-southeast-2b
+  VpcAz3:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: VPC AZ 3
+    Default: ap-southeast-2c
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: VPC CIDR Block, default is 10.0.0.0/16
+  Az1PublicCidr:
+    Type: String
+    Default: 10.0.0.0/19
+    Description: VPC Public CIDR Block, default is 10.0.0.0/19
+  Az1PrivateCidr:
+    Type: String
+    Default: 10.0.32.0/19
+    Description: VPC Private CIDR Block, default is 10.0.32.0/19
+  Az2PublicCidr:
+    Type: String
+    Default: 10.0.64.0/19
+    Description: VPC Public CIDR Block, default is 10.0.64.0/19
+  Az2PrivateCidr:
+    Type: String
+    Default: 10.0.96.0/19
+    Description: VPC Public CIDR Block, default is 10.0.96.0/19
+  Az3PublicCidr:
+    Type: String
+    Default: 10.0.128.0/19
+    Description: VPC Public CIDR Block, default is 10.0.128.0/19
+  Az3PrivateCidr:
+    Type: String
+    Default: 10.0.160.0/19
+    Description: VPC Public CIDR Block, default is 10.0.160.0/19
