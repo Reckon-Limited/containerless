@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Test Docker deployment"
+Parameters:
+Mappings:
+  # ECS Optimzied AMIs http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+  # Marketplace: https://aws.amazon.com/marketplace/pp/B00U6QTYI2?ref=cns_srchrow
+  AWSRegionToAMI:
+    ap-southeast-2:
+      AMIID: ami-774b7314
+Resources:

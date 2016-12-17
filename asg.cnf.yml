@@ -1,0 +1,53 @@
+Resources:
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - Fn::ImportValue:
+            Fn::Sub:
+              "${NetworkStackName}-PublicSubnetAz1"
+      LaunchConfigurationName:
+        Ref: LaunchConfiguration
+      MinSize: '1'
+      MaxSize:
+        Ref: 'MaxSize'
+      DesiredCapacity:
+        Ref: 'DesiredCapacity'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: 'true'
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId:
+        Fn::FindInMap: [AWSRegionToAMI, Ref: 'AWS::Region', AMIID]
+      # ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
+      SecurityGroups:
+        - Ref: 'EcsSecurityGroup'
+      InstanceType:
+        Ref: 'InstanceType'
+      IamInstanceProfile:
+        Ref: 'EC2InstanceProfile'
+      KeyName: ecs-instance
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash -xe
+            yum install -y aws-cfn-bootstrap
+            /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - Ref: 'EcsInstanceRole'
+  EcsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS Security Group
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcID"

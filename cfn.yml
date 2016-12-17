@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Test Docker deployment
+Mappings:
+  AWSRegionToAMI:
+    ap-southeast-2:
+      AMIID: ami-774b7314
+Parameters:
+  DesiredCapacity:
+    Default: 1
+    Description: Number of instances to launch in your ECS cluster.
+    Type: Number
+  InstanceType:
+    AllowedValues:
+    - t2.micro
+    - t2.small
+    ConstraintDescription: Please choose a valid instance type.
+    Default: t2.micro
+    Description: EC2 instance type
+    Type: String
+  MaxSize:
+    Default: 1
+    Description: Maximum number of instances that can be launched in your ECS cluster.
+    Type: Number
+  NetworkStackName:
+    Default: triple-az-vpc
+    Description: Name of the stack containing a VPC with at least two subnets
+    Type: String
+Resources:
+  AutoScalingGroup:
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    Properties:
+      DesiredCapacity:
+        Ref: DesiredCapacity
+      LaunchConfigurationName:
+        Ref: LaunchConfiguration
+      MaxSize:
+        Ref: MaxSize
+      MinSize: "1"
+      VPCZoneIdentifier:
+      - Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-PublicSubnetAz1
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: "true"
+  AutoscalingRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - application-autoscaling.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - application-autoscaling:*
+            - cloudwatch:DescribeAlarms
+            - cloudwatch:PutMetricAlarm
+            - ecs:DescribeServices
+            - ecs:UpdateService
+            Effect: Allow
+            Resource: '*'
+        PolicyName: service-autoscaling
+    Type: AWS::IAM::Role
+  EC2InstanceProfile:
+    Properties:
+      Path: /
+      Roles:
+      - Ref: EcsInstanceRole
+    Type: AWS::IAM::InstanceProfile
+  EcsInstanceRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - ecs:CreateCluster
+            - ecs:DeregisterContainerInstance
+            - ecs:DiscoverPollEndpoint
+            - ecs:Poll
+            - ecs:RegisterContainerInstance
+            - ecs:StartTelemetrySession
+            - ecs:Submit*
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource: '*'
+        PolicyName: ecs-service
+    Type: AWS::IAM::Role
+  EcsSecurityGroup:
+    Properties:
+      GroupDescription: ECS Security Group
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-VpcID
+    Type: AWS::EC2::SecurityGroup
+  LaunchConfiguration:
+    Properties:
+      IamInstanceProfile:
+        Ref: EC2InstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionToAMI
+        - Ref: AWS::Region
+        - AMIID
+      InstanceType:
+        Ref: InstanceType
+      KeyName: ecs-instance
+      SecurityGroups:
+      - Ref: EcsSecurityGroup
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash -xe
+            yum install -y aws-cfn-bootstrap
+            /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+    Type: AWS::AutoScaling::LaunchConfiguration
+

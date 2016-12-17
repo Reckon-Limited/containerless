@@ -1,0 +1,19 @@
+Parameters:
+  NetworkStackName:
+    Type: String
+    Description: Name of the stack containing a VPC with at least two subnets
+    Default: triple-az-vpc
+  DesiredCapacity:
+    Type: Number
+    Default: 1
+    Description: Number of instances to launch in your ECS cluster.
+  MaxSize:
+    Type: Number
+    Default: 1
+    Description: Maximum number of instances that can be launched in your ECS cluster.
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small]
+    ConstraintDescription: Please choose a valid instance type.

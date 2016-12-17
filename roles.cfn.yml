@@ -1,0 +1,49 @@
+Resources:
+  EcsInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ec2.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: ecs-service
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Resource: '*'
+            Action: [ 'ecs:CreateCluster',
+                      'ecs:DeregisterContainerInstance',
+                      'ecs:DiscoverPollEndpoint',
+                      'ecs:Poll',
+                      'ecs:RegisterContainerInstance',
+                      'ecs:StartTelemetrySession',
+                      'ecs:Submit*',
+                      'logs:CreateLogStream',
+                      'logs:PutLogEvents']
+  AutoscalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [application-autoscaling.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: service-autoscaling
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Resource: '*'
+            Action: [
+              'application-autoscaling:*',
+              'cloudwatch:DescribeAlarms',
+              'cloudwatch:PutMetricAlarm',
+              'ecs:DescribeServices',
+              'ecs:UpdateService'
+            ]
