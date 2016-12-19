@@ -10,7 +10,7 @@ Resources:
           Action: ['sts:AssumeRole']
       Path: /
       Policies:
-      - PolicyName: ecs-service
+      - PolicyName: ecs-service-instance
         PolicyDocument:
           Statement:
           - Effect: Allow
@@ -22,6 +22,10 @@ Resources:
                       'ecs:RegisterContainerInstance',
                       'ecs:StartTelemetrySession',
                       'ecs:Submit*',
+                      'ecr:BatchCheckLayerAvailability',
+                      'ecr:BatchGetImage',
+                      'ecr:GetDownloadUrlForLayer',
+                      'ecr:GetAuthorizationToken',
                       'logs:CreateLogStream',
                       'logs:PutLogEvents']
   AutoscalingRole:
@@ -35,7 +39,7 @@ Resources:
           Action: ['sts:AssumeRole']
       Path: /
       Policies:
-      - PolicyName: service-autoscaling
+      - PolicyName: ecs-service-autoscaling
         PolicyDocument:
           Statement:
           - Effect: Allow
@@ -47,3 +51,26 @@ Resources:
               'ecs:DescribeServices',
               'ecs:UpdateService'
             ]
+  EcsELBServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: ecs-service
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Resource: '*'
+            Action: [ 'elasticloadbalancing:DeregisterInstancesFromLoadBalancer',
+                      'elasticloadbalancing:DeregisterTargets',
+                      'elasticloadbalancing:Describe*',
+                      'elasticloadbalancing:RegisterInstancesWithLoadBalancer',
+                      'elasticloadbalancing:RegisterTargets',
+                      'ec2:Describe*',
+                      'ec2:AuthorizeSecurityGroupIngress']

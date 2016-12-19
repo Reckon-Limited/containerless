@@ -1,0 +1,39 @@
+Resources:
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+  EcsService:
+    Type: AWS::ECS::Service
+    # DependsOn: ALBListener
+    Properties:
+      Cluster:
+        Ref: 'EcsCluster'
+      DesiredCount: '1'
+      # LoadBalancers:
+      # - ContainerName: simple-app
+      #   ContainerPort: '80'
+      #   TargetGroupArn: !Ref 'ECSTG'
+      # Role:
+      #   Ref: 'EcsELBServiceRole'
+      TaskDefinition:
+        Ref: 'TaskDefinition'
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family:
+        Fn::Sub:
+          "${AWS::StackName}-task-01"
+      ContainerDefinitions:
+      - Name: task-01
+        Essential: 'true'
+        Image: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:latest
+        Memory: 128
+        # LogConfiguration:
+        #   LogDriver: awslogs
+        #   Options:
+        #     awslogs-group:
+        #       Ref: 'CloudwatchLogsGroup'
+        #     awslogs-region:
+        #       Ref: 'AWS::Region'
+        #     awslogs-stream-prefix: ecs-demo-app
+        PortMappings:
+          - ContainerPort: 3000

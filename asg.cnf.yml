@@ -34,10 +34,12 @@ Resources:
       KeyName: ecs-instance
       UserData:
         Fn::Base64:
-          Fn::Sub: |
-            #!/bin/bash -xe
-            yum install -y aws-cfn-bootstrap
-            /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+          Fn::Sub: (( file "includes/instance-user-data.sh" ))
+          # Fn::Sub: |
+          #   #!/bin/bash -xe
+          #   echo ECS_CLUSTER=${EcsCluster} >> /etc/ecs/ecs.config
+          #   yum install -y aws-cfn-bootstrap
+          #   /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:

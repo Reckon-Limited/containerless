@@ -67,7 +67,7 @@ Resources:
             - ecs:UpdateService
             Effect: Allow
             Resource: '*'
-        PolicyName: service-autoscaling
+        PolicyName: ecs-service-autoscaling
     Type: AWS::IAM::Role
   EC2InstanceProfile:
     Properties:
@@ -75,6 +75,34 @@ Resources:
       Roles:
       - Ref: EcsInstanceRole
     Type: AWS::IAM::InstanceProfile
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+  EcsELBServiceRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ecs.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+            - elasticloadbalancing:DeregisterTargets
+            - elasticloadbalancing:Describe*
+            - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+            - elasticloadbalancing:RegisterTargets
+            - ec2:Describe*
+            - ec2:AuthorizeSecurityGroupIngress
+            Effect: Allow
+            Resource: '*'
+        PolicyName: ecs-service
+    Type: AWS::IAM::Role
   EcsInstanceRole:
     Properties:
       AssumeRolePolicyDocument:
@@ -97,11 +125,15 @@ Resources:
             - ecs:RegisterContainerInstance
             - ecs:StartTelemetrySession
             - ecs:Submit*
+            - ecr:BatchCheckLayerAvailability
+            - ecr:BatchGetImage
+            - ecr:GetDownloadUrlForLayer
+            - ecr:GetAuthorizationToken
             - logs:CreateLogStream
             - logs:PutLogEvents
             Effect: Allow
             Resource: '*'
-        PolicyName: ecs-service
+        PolicyName: ecs-service-instance
     Type: AWS::IAM::Role
   EcsSecurityGroup:
     Properties:
@@ -110,6 +142,14 @@ Resources:
         Fn::ImportValue:
           Fn::Sub: ${NetworkStackName}-VpcID
     Type: AWS::EC2::SecurityGroup
+  EcsService:
+    Properties:
+      Cluster:
+        Ref: EcsCluster
+      DesiredCount: "1"
+      TaskDefinition:
+        Ref: TaskDefinition
+    Type: AWS::ECS::Service
   LaunchConfiguration:
     Properties:
       IamInstanceProfile:
@@ -129,6 +169,24 @@ Resources:
           Fn::Sub: |
             #!/bin/bash -xe
             yum install -y aws-cfn-bootstrap
+
+            #!/bin/bash -xe
+            echo ECS_CLUSTER=${EcsCluster} >> /etc/ecs/ecs.config
+
+            # /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}
+
             /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
     Type: AWS::AutoScaling::LaunchConfiguration
+  TaskDefinition:
+    Properties:
+      ContainerDefinitions:
+      - Essential: "true"
+        Image: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:latest
+        Memory: 128
+        Name: task-01
+        PortMappings:
+        - ContainerPort: 3000
+      Family:
+        Fn::Sub: ${AWS::StackName}-task-01
+    Type: AWS::ECS::TaskDefinition
 
