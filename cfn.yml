@@ -69,6 +69,12 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-autoscaling
     Type: AWS::IAM::Role
+  CloudwatchLogsGroup:
+    Properties:
+      LogGroupName:
+        Fn::Sub: serverlecs-${AWS::StackName}
+      RetentionInDays: 14
+    Type: AWS::Logs::LogGroup
   EC2InstanceProfile:
     Properties:
       Path: /
@@ -135,13 +141,6 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-instance
     Type: AWS::IAM::Role
-  EcsSecurityGroup:
-    Properties:
-      GroupDescription: ECS Security Group
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: ${NetworkStackName}-VpcID
-    Type: AWS::EC2::SecurityGroup
   EcsService:
     Properties:
       Cluster:
@@ -163,7 +162,7 @@ Resources:
         Ref: InstanceType
       KeyName: ecs-instance
       SecurityGroups:
-      - Ref: EcsSecurityGroup
+      - Ref: PublicSecurityGroup
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -177,15 +176,59 @@ Resources:
 
             /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
     Type: AWS::AutoScaling::LaunchConfiguration
+  PublicSecurityGroup:
+    Properties:
+      GroupDescription: ECS Security Group
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-VpcID
+    Type: AWS::EC2::SecurityGroup
+  PublicSecurityGroupHttpInbound:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: "80"
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      ToPort: "80"
+    Type: AWS::EC2::SecurityGroupIngress
+  PublicSecurityGroupHttpsInbound:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: "443"
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      ToPort: "443"
+    Type: AWS::EC2::SecurityGroupIngress
+  PublicSecurityGroupSshInbound:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: "22"
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      ToPort: "22"
+    Type: AWS::EC2::SecurityGroupIngress
   TaskDefinition:
     Properties:
       ContainerDefinitions:
       - Essential: "true"
         Image: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:latest
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: CloudwatchLogsGroup
+            awslogs-region:
+              Ref: AWS::Region
+            awslogs-stream-prefix:
+              Ref: AWS::StackName
         Memory: 128
         Name: task-01
         PortMappings:
         - ContainerPort: 3000
+          HostPort: 3000
       Family:
         Fn::Sub: ${AWS::StackName}-task-01
     Type: AWS::ECS::TaskDefinition

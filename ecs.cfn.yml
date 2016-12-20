@@ -16,6 +16,13 @@ Resources:
       #   Ref: 'EcsELBServiceRole'
       TaskDefinition:
         Ref: 'TaskDefinition'
+  CloudwatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          "serverlecs-${AWS::StackName}"
+      RetentionInDays: 14
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -27,13 +34,15 @@ Resources:
         Essential: 'true'
         Image: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:latest
         Memory: 128
-        # LogConfiguration:
-        #   LogDriver: awslogs
-        #   Options:
-        #     awslogs-group:
-        #       Ref: 'CloudwatchLogsGroup'
-        #     awslogs-region:
-        #       Ref: 'AWS::Region'
-        #     awslogs-stream-prefix: ecs-demo-app
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: 'CloudwatchLogsGroup'
+            awslogs-region:
+              Ref: 'AWS::Region'
+            awslogs-stream-prefix:
+              Ref: AWS::StackName
         PortMappings:
           - ContainerPort: 3000
+            HostPort: 3000

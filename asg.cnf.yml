@@ -24,9 +24,8 @@ Resources:
     Properties:
       ImageId:
         Fn::FindInMap: [AWSRegionToAMI, Ref: 'AWS::Region', AMIID]
-      # ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
       SecurityGroups:
-        - Ref: 'EcsSecurityGroup'
+        - Ref: PublicSecurityGroup
       InstanceType:
         Ref: 'InstanceType'
       IamInstanceProfile:
@@ -35,21 +34,43 @@ Resources:
       UserData:
         Fn::Base64:
           Fn::Sub: (( file "includes/instance-user-data.sh" ))
-          # Fn::Sub: |
-          #   #!/bin/bash -xe
-          #   echo ECS_CLUSTER=${EcsCluster} >> /etc/ecs/ecs.config
-          #   yum install -y aws-cfn-bootstrap
-          #   /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
       Roles:
         - Ref: 'EcsInstanceRole'
-  EcsSecurityGroup:
+  PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: ECS Security Group
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "${NetworkStackName}-VpcID"
+  PublicSecurityGroupHttpInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      FromPort: '80'
+      ToPort: '80'
+      CidrIp: 0.0.0.0/0
+  PublicSecurityGroupHttpsInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      FromPort: '443'
+      ToPort: '443'
+      CidrIp: 0.0.0.0/0
+  PublicSecurityGroupSshInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
