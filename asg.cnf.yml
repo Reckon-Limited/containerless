@@ -27,9 +27,9 @@ Resources:
       SecurityGroups:
         - Ref: PublicSecurityGroup
       InstanceType:
-        Ref: 'InstanceType'
+        Ref: InstanceType
       IamInstanceProfile:
-        Ref: 'EC2InstanceProfile'
+        Ref: EC2InstanceProfile
       KeyName: ecs-instance
       UserData:
         Fn::Base64:
@@ -39,15 +39,25 @@ Resources:
     Properties:
       Path: /
       Roles:
-        - Ref: 'EcsInstanceRole'
+        - Ref: ECSInstanceRole
   PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: ECS Security Group
+      GroupDescription: ECS Public Security Group
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "${NetworkStackName}-VpcID"
-  PublicSecurityGroupHttpInbound:
+  PublicSecurityGroupDynamicPorts:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      FromPort: 31000
+      ToPort: 61000
+      SourceSecurityGroupId:
+        Ref: PublicSecurityGroup
+  PublicSecurityGroupHTTPInbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -56,7 +66,7 @@ Resources:
       FromPort: '80'
       ToPort: '80'
       CidrIp: 0.0.0.0/0
-  PublicSecurityGroupHttpsInbound:
+  PublicSecurityGroupHTTPSInbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -65,7 +75,7 @@ Resources:
       FromPort: '443'
       ToPort: '443'
       CidrIp: 0.0.0.0/0
-  PublicSecurityGroupSshInbound:
+  PublicSecurityGroupSSHInbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:

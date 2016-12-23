@@ -1,18 +1,8 @@
 Resources:
-  public-security-group-dynamic-ports:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId:
-        Ref: PublicSecurityGroup
-      IpProtocol: tcp
-      FromPort: 31000
-      ToPort: 61000
-      SourceSecurityGroupId:
-        Ref: PublicSecurityGroup
-  elb:
+  ELB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: elb
+      Name: ecs-elb
       Scheme: internet-facing
       LoadBalancerAttributes:
       - Key: idle_timeout.timeout_seconds
@@ -21,31 +11,51 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub:
               "${NetworkStackName}-PublicSubnetAz1"
+        - Fn::ImportValue:
+            Fn::Sub:
+              "${NetworkStackName}-PublicSubnetAz2"
       SecurityGroups:
-        Ref: PublicSecurityGroup
-  elb-listener:
+        - Ref: PublicSecurityGroup
+  ELBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn: ECSServiceRole
+    DependsOn: ELBServiceRole
     Properties:
       DefaultActions:
       - Type: forward
         TargetGroupArn:
-          Ref: elb-target-group
+          Ref: ELBTargetGroup
       LoadBalancerArn:
-        Ref: EcsELBServiceRole
+        Ref: ELB
       Port: '80'
       Protocol: HTTP
-  elb-target-group:
+  ELBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn: ECSALB
+    DependsOn: ELB
     Properties:
+      Name: ELBTargetGroup
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
-      Name: ECSTG
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !Ref 'VpcId'
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcID"
+  ELBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: ELBListener
+    Properties:
+      Actions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ELBTargetGroup
+      Conditions:
+      - Field: path-pattern
+        Values: [/]
+      ListenerArn:
+        Ref:
+          ELBListener
+      Priority: 1

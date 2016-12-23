@@ -69,7 +69,7 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-autoscaling
     Type: AWS::IAM::Role
-  CloudwatchLogsGroup:
+  CloudwatchLogGroup:
     Properties:
       LogGroupName:
         Fn::Sub: serverlecs-${AWS::StackName}
@@ -79,37 +79,11 @@ Resources:
     Properties:
       Path: /
       Roles:
-      - Ref: EcsInstanceRole
+      - Ref: ECSInstanceRole
     Type: AWS::IAM::InstanceProfile
-  EcsCluster:
+  ECSCluster:
     Type: AWS::ECS::Cluster
-  EcsELBServiceRole:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Action:
-          - sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service:
-            - ecs.amazonaws.com
-      Path: /
-      Policies:
-      - PolicyDocument:
-          Statement:
-          - Action:
-            - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-            - elasticloadbalancing:DeregisterTargets
-            - elasticloadbalancing:Describe*
-            - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-            - elasticloadbalancing:RegisterTargets
-            - ec2:Describe*
-            - ec2:AuthorizeSecurityGroupIngress
-            Effect: Allow
-            Resource: '*'
-        PolicyName: ecs-service
-    Type: AWS::IAM::Role
-  EcsInstanceRole:
+  ECSInstanceRole:
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -141,14 +115,106 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-instance
     Type: AWS::IAM::Role
-  EcsService:
+  ECSService:
+    DependsOn: ELBListener
     Properties:
       Cluster:
-        Ref: EcsCluster
+        Ref: ECSCluster
       DesiredCount: "1"
+      LoadBalancers:
+      - ContainerName: task-01
+        ContainerPort: 3000
+        TargetGroupArn:
+          Ref: ELBTargetGroup
+      Role:
+        Ref: ELBServiceRole
       TaskDefinition:
         Ref: TaskDefinition
     Type: AWS::ECS::Service
+  ELB:
+    Properties:
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: 30
+      Name: ecs-elb
+      Scheme: internet-facing
+      SecurityGroups:
+      - Ref: PublicSecurityGroup
+      Subnets:
+      - Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-PublicSubnetAz1
+      - Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-PublicSubnetAz2
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  ELBListener:
+    DependsOn: ELBServiceRole
+    Properties:
+      DefaultActions:
+      - TargetGroupArn:
+          Ref: ELBTargetGroup
+        Type: forward
+      LoadBalancerArn:
+        Ref: ELB
+      Port: "80"
+      Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+  ELBListenerRule:
+    DependsOn: ELBListener
+    Properties:
+      Actions:
+      - TargetGroupArn:
+          Ref: ELBTargetGroup
+        Type: forward
+      Conditions:
+      - Field: path-pattern
+        Values:
+        - /
+      ListenerArn:
+        Ref: ELBListener
+      Priority: 1
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  ELBServiceRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ecs.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+            - elasticloadbalancing:DeregisterTargets
+            - elasticloadbalancing:Describe*
+            - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+            - elasticloadbalancing:RegisterTargets
+            - ec2:Describe*
+            - ec2:AuthorizeSecurityGroupIngress
+            Effect: Allow
+            Resource: '*'
+        PolicyName: ecs-service
+    Type: AWS::IAM::Role
+  ELBTargetGroup:
+    DependsOn: ELB
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Name: ELBTargetGroup
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-VpcID
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
   LaunchConfiguration:
     Properties:
       IamInstanceProfile:
@@ -170,7 +236,7 @@ Resources:
             yum install -y aws-cfn-bootstrap
 
             #!/bin/bash -xe
-            echo ECS_CLUSTER=${EcsCluster} >> /etc/ecs/ecs.config
+            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
 
             # /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}
 
@@ -178,12 +244,22 @@ Resources:
     Type: AWS::AutoScaling::LaunchConfiguration
   PublicSecurityGroup:
     Properties:
-      GroupDescription: ECS Security Group
+      GroupDescription: ECS Public Security Group
       VpcId:
         Fn::ImportValue:
           Fn::Sub: ${NetworkStackName}-VpcID
     Type: AWS::EC2::SecurityGroup
-  PublicSecurityGroupHttpInbound:
+  PublicSecurityGroupDynamicPorts:
+    Properties:
+      FromPort: 31000
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      SourceSecurityGroupId:
+        Ref: PublicSecurityGroup
+      ToPort: 61000
+    Type: AWS::EC2::SecurityGroupIngress
+  PublicSecurityGroupHTTPInbound:
     Properties:
       CidrIp: 0.0.0.0/0
       FromPort: "80"
@@ -192,7 +268,7 @@ Resources:
       IpProtocol: tcp
       ToPort: "80"
     Type: AWS::EC2::SecurityGroupIngress
-  PublicSecurityGroupHttpsInbound:
+  PublicSecurityGroupHTTPSInbound:
     Properties:
       CidrIp: 0.0.0.0/0
       FromPort: "443"
@@ -201,7 +277,7 @@ Resources:
       IpProtocol: tcp
       ToPort: "443"
     Type: AWS::EC2::SecurityGroupIngress
-  PublicSecurityGroupSshInbound:
+  PublicSecurityGroupSSHInbound:
     Properties:
       CidrIp: 0.0.0.0/0
       FromPort: "22"
@@ -210,6 +286,40 @@ Resources:
       IpProtocol: tcp
       ToPort: "22"
     Type: AWS::EC2::SecurityGroupIngress
+  ServiceScalableTarget:
+    DependsOn: ECSService
+    Properties:
+      MaxCapacity: 2
+      MinCapacity: 1
+      ResourceId:
+        Fn::Sub:
+        - service/${ECSCluster}/${ECSServiceName}
+        - ECSServiceName:
+            Fn::GetAtt:
+            - ECSService
+            - Name
+      RoleARN:
+        Fn::GetAtt:
+        - AutoscalingRole
+        - Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+  ServiceScalingPolicy:
+    DependsOn: ServiceScalableTarget
+    Properties:
+      PolicyName: ecs-service-step-scaling-policy
+      PolicyType: StepScaling
+      ScalingTargetId:
+        Ref: ServiceScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: PercentChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 200
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
   TaskDefinition:
     Properties:
       ContainerDefinitions:
@@ -219,7 +329,7 @@ Resources:
           LogDriver: awslogs
           Options:
             awslogs-group:
-              Ref: CloudwatchLogsGroup
+              Ref: CloudwatchLogGroup
             awslogs-region:
               Ref: AWS::Region
             awslogs-stream-prefix:
@@ -228,7 +338,6 @@ Resources:
         Name: task-01
         PortMappings:
         - ContainerPort: 3000
-          HostPort: 3000
       Family:
         Fn::Sub: ${AWS::StackName}-task-01
     Type: AWS::ECS::TaskDefinition

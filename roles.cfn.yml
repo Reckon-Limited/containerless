@@ -1,5 +1,5 @@
 Resources:
-  EcsInstanceRole:
+  ECSInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -51,7 +51,7 @@ Resources:
               'ecs:DescribeServices',
               'ecs:UpdateService'
             ]
-  EcsELBServiceRole:
+  ELBServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:

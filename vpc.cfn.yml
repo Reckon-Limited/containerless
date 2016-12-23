@@ -169,7 +169,7 @@ Outputs:
       Ref: Vpc
     Export:
       Name:
-        !Sub "${AWS::StackName}-VpcID"
+        Fn::Sub: "${AWS::StackName}-VpcID"
   PublicRouteTable:
     Description: Public Route Table
     Value:
@@ -180,14 +180,14 @@ Outputs:
       Ref: PublicSubnetAz1
     Export:
       Name:
-        !Sub "${AWS::StackName}-PublicSubnetAz1"
+        Fn::Sub: "${AWS::StackName}-PublicSubnetAz1"
   PublicSubnetAz2:
     Description: Public Subnet AZ 2
     Value:
       Ref: PublicSubnetAz2
     Export:
       Name:
-        !Sub "${AWS::StackName}-PublicSubnetAz2"
+        Fn::Sub: "${AWS::StackName}-PublicSubnetAz2"
   PublicSubnetAz3:
     Description: Public Subnet AZ 3
     Condition: CreateInThreeAZs
@@ -195,7 +195,7 @@ Outputs:
       Ref: PublicSubnetAz3
     Export:
       Name:
-        !Sub "${AWS::StackName}-PublicSubnetAz3"
+        Fn::Sub: "${AWS::StackName}-PublicSubnetAz3"
   PrivateSubnetAz1:
     Description: Private Subnet AZ 1
     Value:

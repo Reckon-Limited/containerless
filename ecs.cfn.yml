@@ -1,28 +1,22 @@
 Resources:
-  EcsCluster:
+  ECSCluster:
     Type: AWS::ECS::Cluster
-  EcsService:
+  ECSService:
     Type: AWS::ECS::Service
-    # DependsOn: ALBListener
+    DependsOn: ELBListener
     Properties:
       Cluster:
-        Ref: 'EcsCluster'
+        Ref: ECSCluster
       DesiredCount: '1'
-      # LoadBalancers:
-      # - ContainerName: simple-app
-      #   ContainerPort: '80'
-      #   TargetGroupArn: !Ref 'ECSTG'
-      # Role:
-      #   Ref: 'EcsELBServiceRole'
+      LoadBalancers:
+      - ContainerName: task-01
+        ContainerPort: 3000
+        TargetGroupArn:
+          Ref: ELBTargetGroup
+      Role:
+        Ref: ELBServiceRole
       TaskDefinition:
-        Ref: 'TaskDefinition'
-  CloudwatchLogsGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName:
-        Fn::Sub:
-          "serverlecs-${AWS::StackName}"
-      RetentionInDays: 14
+        Ref: TaskDefinition
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -38,11 +32,62 @@ Resources:
           LogDriver: awslogs
           Options:
             awslogs-group:
-              Ref: 'CloudwatchLogsGroup'
+              Ref: CloudwatchLogGroup
             awslogs-region:
-              Ref: 'AWS::Region'
+              Ref: AWS::Region
             awslogs-stream-prefix:
               Ref: AWS::StackName
         PortMappings:
           - ContainerPort: 3000
-            HostPort: 3000
+  CloudwatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          "serverlecs-${AWS::StackName}"
+      RetentionInDays: 14
+  ServiceScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn: ECSService
+    Properties:
+      MaxCapacity: 2
+      MinCapacity: 1
+      ResourceId:        
+        Fn::Sub:
+          - "service/${ECSCluster}/${ECSServiceName}"
+          - ECSServiceName:
+              Fn::GetAtt: [ECSService, Name]
+      RoleARN:
+        Fn::GetAtt: [AutoscalingRole, Arn]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+  ServiceScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    DependsOn: ServiceScalableTarget
+    Properties:
+      PolicyName: ecs-service-step-scaling-policy
+      PolicyType: StepScaling
+      ScalingTargetId:
+        Ref: ServiceScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: PercentChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 200
+# ALB500sAlarmScaleUp:
+#   Type: AWS::CloudWatch::Alarm
+#   Properties:
+#     EvaluationPeriods: '1'
+#     Statistic: Average
+#     Threshold: '10'
+#     AlarmDescription: Alarm if our ALB generates too many HTTP 500s.
+#     Period: '60'
+#     AlarmActions: [!Ref 'ServiceScalingPolicy']
+#     Namespace: AWS/ApplicationELB
+#     Dimensions:
+#     - Name: ECSService
+#       Value: !Ref 'service'
+#     ComparisonOperator: GreaterThanThreshold
+#     MetricName: HTTPCode_ELB_5XX_Count
