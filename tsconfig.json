@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+      "target": "ES5",
+      "noImplicitAny": true,
+      "removeComments": false,
+      "preserveConstEnums": true,
+      "strictNullChecks": true,
+      "sourceMap": false
+    },
+    "filesGlob": [
+      "**/*.ts",
+      ".serverless_plugins/**/*.ts",
+      "!node_modules/**"
+    ],
+    "atom": {
+      "rewriteTsconfig": false
+    }
+}
