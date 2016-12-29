@@ -1,0 +1,329 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Test Docker deployment
+Mappings:
+  AWSRegionToAMI:
+    ap-northeast-1:
+      AMIID: ami-08f7956f
+    ap-southeast-1:
+      AMIID: ami-f4832f97
+    ap-southeast-2:
+      AMIID: ami-774b7314
+    ca-central-1:
+      AMIID: ami-be45f7da
+    eu-central-1:
+      AMIID: ami-e012d48f
+    eu-west-1:
+      AMIID: ami-ba346ec9
+    eu-west-2:
+      AMIID: ami-42c5cf26
+    us-east-1:
+      AMIID: ami-6df8fe7a
+    us-east-2:
+      AMIID: ami-c6b5efa3
+    us-west-1:
+      AMIID: ami-1eda8d7e
+    us-west-2:
+      AMIID: ami-a2ca61c2
+Outputs:
+  ClusterID:
+    Description: ClusterID
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-ClusterID
+    Value:
+      Ref: ECSCluster
+Parameters:
+  DesiredCapacity:
+    Default: 1
+    Description: Number of instances to launch in your ECS cluster.
+    Type: Number
+  InstanceType:
+    AllowedValues:
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - m4.4xlarge
+    - m4.10xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - c4.8xlarge
+    - c3.large
+    - c3.xlarge
+    - c3.2xlarge
+    - c3.4xlarge
+    - c3.8xlarge
+    - r3.large
+    - r3.xlarge
+    - r3.2xlarge
+    - r3.4xlarge
+    - r3.8xlarge
+    - i2.xlarge
+    - i2.2xlarge
+    - i2.4xlarge
+    - i2.8xlarge
+    ConstraintDescription: Please choose a valid instance type.
+    Default: t2.micro
+    Description: EC2 instance type
+    Type: String
+  MaxSize:
+    Default: 1
+    Description: Maximum number of instances that can be launched in your ECS cluster.
+    Type: Number
+  NetworkStackName:
+    Default: triple-az-vpc
+    Description: Name of the stack containing a VPC with at least two subnets
+    Type: String
+  VPCId:
+    Description: Name of the stack containing a VPC with at least two subnets
+    Type: AWS::EC2::VPC::Id
+  VPCZoneIdentifier:
+    Description: Name of the stack containing a VPC with at least two subnets
+    Type: CommaDelimitedList
+Resources:
+  AutoScalingGroup:
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    Properties:
+      DesiredCapacity:
+        Ref: DesiredCapacity
+      LaunchConfigurationName:
+        Ref: LaunchConfiguration
+      MaxSize:
+        Ref: MaxSize
+      MinSize: "1"
+      VPCZoneIdentifier:
+        Ref: VPCZoneIdentifier
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: "true"
+  AutoscalingRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - application-autoscaling.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - application-autoscaling:*
+            - cloudwatch:DescribeAlarms
+            - cloudwatch:PutMetricAlarm
+            - ecs:DescribeServices
+            - ecs:UpdateService
+            Effect: Allow
+            Resource: '*'
+        PolicyName: ecs-service-autoscaling
+    Type: AWS::IAM::Role
+  EC2InstanceProfile:
+    Properties:
+      Path: /
+      Roles:
+      - Ref: ECSInstanceRole
+    Type: AWS::IAM::InstanceProfile
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+  ECSInstanceRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - ecs:CreateCluster
+            - ecs:DeregisterContainerInstance
+            - ecs:DiscoverPollEndpoint
+            - ecs:Poll
+            - ecs:RegisterContainerInstance
+            - ecs:StartTelemetrySession
+            - ecs:Submit*
+            - ecr:BatchCheckLayerAvailability
+            - ecr:BatchGetImage
+            - ecr:GetDownloadUrlForLayer
+            - ecr:GetAuthorizationToken
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource: '*'
+        PolicyName: ecs-service-instance
+    Type: AWS::IAM::Role
+  ELB:
+    Properties:
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: 30
+      Name: ecs-elb
+      Scheme: internet-facing
+      SecurityGroups:
+      - Ref: PublicSecurityGroup
+      Subnets:
+      - Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-PublicSubnetAz1
+      - Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-PublicSubnetAz2
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  ELBListener:
+    DependsOn: ELBServiceRole
+    Properties:
+      DefaultActions:
+      - TargetGroupArn:
+          Ref: ELBTargetGroup
+        Type: forward
+      LoadBalancerArn:
+        Ref: ELB
+      Port: "80"
+      Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+  ELBListenerRule:
+    DependsOn: ELBListener
+    Properties:
+      Actions:
+      - TargetGroupArn:
+          Ref: ELBTargetGroup
+        Type: forward
+      Conditions:
+      - Field: path-pattern
+        Values:
+        - /
+      ListenerArn:
+        Ref: ELBListener
+      Priority: 1
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  ELBServiceRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ecs.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+            - elasticloadbalancing:DeregisterTargets
+            - elasticloadbalancing:Describe*
+            - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+            - elasticloadbalancing:RegisterTargets
+            - ec2:Describe*
+            - ec2:AuthorizeSecurityGroupIngress
+            Effect: Allow
+            Resource: '*'
+        PolicyName: ecs-service
+    Type: AWS::IAM::Role
+  ELBTargetGroup:
+    DependsOn: ELB
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Name: ELBTargetGroup
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: ${NetworkStackName}-VpcID
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  LaunchConfiguration:
+    Properties:
+      IamInstanceProfile:
+        Ref: EC2InstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionToAMI
+        - Ref: AWS::Region
+        - AMIID
+      InstanceType:
+        Ref: InstanceType
+      KeyName: ecs-instance
+      SecurityGroups:
+      - Ref: PublicSecurityGroup
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash -xe
+            yum install -y aws-cfn-bootstrap
+
+            #!/bin/bash -xe
+            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+
+            # /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}
+
+            /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+    Type: AWS::AutoScaling::LaunchConfiguration
+  PublicSecurityGroup:
+    Properties:
+      GroupDescription: ECS Public Security Group
+      VpcId:
+        Ref: VPCId
+    Type: AWS::EC2::SecurityGroup
+  PublicSecurityGroupDynamicPorts:
+    Properties:
+      FromPort: 31000
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      SourceSecurityGroupId:
+        Ref: PublicSecurityGroup
+      ToPort: 61000
+    Type: AWS::EC2::SecurityGroupIngress
+  PublicSecurityGroupHTTPInbound:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: "80"
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      ToPort: "80"
+    Type: AWS::EC2::SecurityGroupIngress
+  PublicSecurityGroupHTTPSInbound:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: "443"
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      ToPort: "443"
+    Type: AWS::EC2::SecurityGroupIngress
+  PublicSecurityGroupSSHInbound:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: "22"
+      GroupId:
+        Ref: PublicSecurityGroup
+      IpProtocol: tcp
+      ToPort: "22"
+    Type: AWS::EC2::SecurityGroupIngress
+

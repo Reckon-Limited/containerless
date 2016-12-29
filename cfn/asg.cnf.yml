@@ -1,11 +1,20 @@
+Parameters:
+  VPCId:
+    Description: Name of the stack containing a VPC with at least two subnets
+    Type: AWS::EC2::VPC::Id
+  VPCZoneIdentifier:
+    Description: Name of the stack containing a VPC with at least two subnets
+    Type: CommaDelimitedList
 Resources:
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    # DependsOn: ECSCluster
     Properties:
       VPCZoneIdentifier:
-        - Fn::ImportValue:
-            Fn::Sub:
-              "${NetworkStackName}-PublicSubnetAz1"
+        Ref: VPCZoneIdentifier
+        # - Fn::ImportValue:
+        #     Fn::Sub:
+        #       "${NetworkStackName}-PublicSubnetAz1"
       LaunchConfigurationName:
         Ref: LaunchConfiguration
       MinSize: '1'
@@ -15,10 +24,11 @@ Resources:
         Ref: 'DesiredCapacity'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT5M
+        Timeout: PT60M
     UpdatePolicy:
       AutoScalingReplacingUpdate:
         WillReplace: 'true'
+        PauseTime: PT60S
   LaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
@@ -45,8 +55,7 @@ Resources:
     Properties:
       GroupDescription: ECS Public Security Group
       VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcID"
+        Ref: VPCId
   PublicSecurityGroupDynamicPorts:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:

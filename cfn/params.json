@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "VPCZoneIdentifier",
+    "ParameterValue": "subnet-12359e64,subnet-b442c0d0,subnet-a2b967fb"
+  },
+  {
+    "ParameterKey": "VPCId",
+    "ParameterValue": "vpc-7a93541e"
+  }
+]

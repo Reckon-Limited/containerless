@@ -2,8 +2,36 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Test Docker deployment
 Mappings:
   AWSRegionToAMI:
+    ap-northeast-1:
+      AMIID: ami-08f7956f
+    ap-southeast-1:
+      AMIID: ami-f4832f97
     ap-southeast-2:
       AMIID: ami-774b7314
+    ca-central-1:
+      AMIID: ami-be45f7da
+    eu-central-1:
+      AMIID: ami-e012d48f
+    eu-west-1:
+      AMIID: ami-ba346ec9
+    eu-west-2:
+      AMIID: ami-42c5cf26
+    us-east-1:
+      AMIID: ami-6df8fe7a
+    us-east-2:
+      AMIID: ami-c6b5efa3
+    us-west-1:
+      AMIID: ami-1eda8d7e
+    us-west-2:
+      AMIID: ami-a2ca61c2
+Outputs:
+  ClusterID:
+    Description: ClusterID
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-ClusterID
+    Value:
+      Ref: ECSCluster
 Parameters:
   DesiredCapacity:
     Default: 1
@@ -69,12 +97,6 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-autoscaling
     Type: AWS::IAM::Role
-  CloudwatchLogGroup:
-    Properties:
-      LogGroupName:
-        Fn::Sub: serverlecs-${AWS::StackName}
-      RetentionInDays: 14
-    Type: AWS::Logs::LogGroup
   EC2InstanceProfile:
     Properties:
       Path: /
@@ -115,22 +137,6 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-instance
     Type: AWS::IAM::Role
-  ECSService:
-    DependsOn: ELBListener
-    Properties:
-      Cluster:
-        Ref: ECSCluster
-      DesiredCount: "1"
-      LoadBalancers:
-      - ContainerName: task-01
-        ContainerPort: 3000
-        TargetGroupArn:
-          Ref: ELBTargetGroup
-      Role:
-        Ref: ELBServiceRole
-      TaskDefinition:
-        Ref: TaskDefinition
-    Type: AWS::ECS::Service
   ELB:
     Properties:
       LoadBalancerAttributes:
@@ -286,59 +292,4 @@ Resources:
       IpProtocol: tcp
       ToPort: "22"
     Type: AWS::EC2::SecurityGroupIngress
-  ServiceScalableTarget:
-    DependsOn: ECSService
-    Properties:
-      MaxCapacity: 2
-      MinCapacity: 1
-      ResourceId:
-        Fn::Sub:
-        - service/${ECSCluster}/${ECSServiceName}
-        - ECSServiceName:
-            Fn::GetAtt:
-            - ECSService
-            - Name
-      RoleARN:
-        Fn::GetAtt:
-        - AutoscalingRole
-        - Arn
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-  ServiceScalingPolicy:
-    DependsOn: ServiceScalableTarget
-    Properties:
-      PolicyName: ecs-service-step-scaling-policy
-      PolicyType: StepScaling
-      ScalingTargetId:
-        Ref: ServiceScalableTarget
-      StepScalingPolicyConfiguration:
-        AdjustmentType: PercentChangeInCapacity
-        Cooldown: 60
-        MetricAggregationType: Average
-        StepAdjustments:
-        - MetricIntervalLowerBound: 0
-          ScalingAdjustment: 200
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-  TaskDefinition:
-    Properties:
-      ContainerDefinitions:
-      - Essential: "true"
-        Image: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:latest
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group:
-              Ref: CloudwatchLogGroup
-            awslogs-region:
-              Ref: AWS::Region
-            awslogs-stream-prefix:
-              Ref: AWS::StackName
-        Memory: 128
-        Name: task-01
-        PortMappings:
-        - ContainerPort: 3000
-      Family:
-        Fn::Sub: ${AWS::StackName}-task-01
-    Type: AWS::ECS::TaskDefinition
 

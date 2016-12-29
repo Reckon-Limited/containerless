@@ -1,6 +1,4 @@
 Resources:
-  ECSCluster:
-    Type: AWS::ECS::Cluster
   ECSService:
     Type: AWS::ECS::Service
     DependsOn: ELBListener
@@ -52,7 +50,7 @@ Resources:
     Properties:
       MaxCapacity: 2
       MinCapacity: 1
-      ResourceId:        
+      ResourceId:
         Fn::Sub:
           - "service/${ECSCluster}/${ECSServiceName}"
           - ECSServiceName:
