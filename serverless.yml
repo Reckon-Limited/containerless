@@ -11,3 +11,20 @@ plugins:
 functions:
   hello:
     handler: handler.hello
+
+custom:
+  serverlecs:
+    service:
+      cluster: ClusterID
+      repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
+      containers:
+        hello:
+          src: src
+          memory: 128
+    # blah:
+    #   cluster: ClusterID
+    #   repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
+    #   containers:
+    #     hello:
+    #       src: handler.hello
+    #       memory: 128
