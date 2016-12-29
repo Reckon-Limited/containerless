@@ -1,7 +1,7 @@
 FROM mhart/alpine-node:4
 
 WORKDIR /src
-ADD src .
+ADD . .
 
 # If you have native dependencies, you'll need extra tools
 # RUN apk add --no-cache make gcc g++ python

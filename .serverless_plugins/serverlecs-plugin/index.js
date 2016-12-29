@@ -35,8 +35,8 @@ class ServerlecsPlugin {
     }
     dockerBuild(container, tag) {
         // console.log(container);
-        let dockerfile = `${this.serverless.config.servicePath}/${container.src}`;
-        console.log(`docker build -t ${tag} ${dockerfile}`);
+        let context = `${this.serverless.config.servicePath}/${container.path}`;
+        console.log(`docker build -t ${tag} ${context}`);
         // const exec = require('child_process').exec;
         // const child = exec(`docker build -t ${container} ${dockerfile}`,
         //     (error, stdout, stderr) => {

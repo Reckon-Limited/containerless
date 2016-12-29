@@ -19,7 +19,7 @@ custom:
       repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
       containers:
         hello:
-          src: src
+          path: src
           memory: 128
     # blah:
     #   cluster: ClusterID

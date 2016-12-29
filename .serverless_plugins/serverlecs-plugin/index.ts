@@ -15,7 +15,7 @@ interface Hooks {
 }
 
 interface Container {
-  src: string
+  path: string
 }
 
 // this._serverless.service.provider.compiledCloudFormationTemplate.Resources[permRef] = permission;
@@ -79,8 +79,8 @@ class ServerlecsPlugin {
 
   dockerBuild(container: Container, tag: string) {
     // console.log(container);
-    let dockerfile = `${this.serverless.config.servicePath}/${container.src}`;
-    console.log(`docker build -t ${tag} ${dockerfile}`);
+    let context = `${this.serverless.config.servicePath}/${container.path}`;
+    console.log(`docker build -t ${tag} ${context}`);
 
     // const exec = require('child_process').exec;
     // const child = exec(`docker build -t ${container} ${dockerfile}`,
