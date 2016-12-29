@@ -5,6 +5,14 @@ Parameters:
   VPCZoneIdentifier:
     Description: Name of the stack containing a VPC with at least two subnets
     Type: CommaDelimitedList
+  DesiredCapacity:
+    Type: Number
+    Default: 1
+    Description: Number of instances to launch in your ECS cluster.
+  MaxSize:
+    Type: Number
+    Default: 1
+    Description: Maximum number of instances that can be launched in your ECS cluster.
 Resources:
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -28,10 +36,11 @@ Resources:
     UpdatePolicy:
       AutoScalingReplacingUpdate:
         WillReplace: 'true'
-        PauseTime: PT60S
+        PauseTime: PT60M
   LaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
+      # AssociatePublicIpAddress: true #not needed if subnet allocates
       ImageId:
         Fn::FindInMap: [AWSRegionToAMI, Ref: 'AWS::Region', AMIID]
       SecurityGroups:

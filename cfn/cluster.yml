@@ -79,10 +79,6 @@ Parameters:
     Default: 1
     Description: Maximum number of instances that can be launched in your ECS cluster.
     Type: Number
-  NetworkStackName:
-    Default: triple-az-vpc
-    Description: Name of the stack containing a VPC with at least two subnets
-    Type: String
   VPCId:
     Description: Name of the stack containing a VPC with at least two subnets
     Type: AWS::EC2::VPC::Id
@@ -93,7 +89,7 @@ Resources:
   AutoScalingGroup:
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT5M
+        Timeout: PT60M
     Properties:
       DesiredCapacity:
         Ref: DesiredCapacity
@@ -107,6 +103,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     UpdatePolicy:
       AutoScalingReplacingUpdate:
+        PauseTime: PT60M
         WillReplace: "true"
   AutoscalingRole:
     Properties:
@@ -172,92 +169,9 @@ Resources:
             Resource: '*'
         PolicyName: ecs-service-instance
     Type: AWS::IAM::Role
-  ELB:
-    Properties:
-      LoadBalancerAttributes:
-      - Key: idle_timeout.timeout_seconds
-        Value: 30
-      Name: ecs-elb
-      Scheme: internet-facing
-      SecurityGroups:
-      - Ref: PublicSecurityGroup
-      Subnets:
-      - Fn::ImportValue:
-          Fn::Sub: ${NetworkStackName}-PublicSubnetAz1
-      - Fn::ImportValue:
-          Fn::Sub: ${NetworkStackName}-PublicSubnetAz2
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-  ELBListener:
-    DependsOn: ELBServiceRole
-    Properties:
-      DefaultActions:
-      - TargetGroupArn:
-          Ref: ELBTargetGroup
-        Type: forward
-      LoadBalancerArn:
-        Ref: ELB
-      Port: "80"
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
-  ELBListenerRule:
-    DependsOn: ELBListener
-    Properties:
-      Actions:
-      - TargetGroupArn:
-          Ref: ELBTargetGroup
-        Type: forward
-      Conditions:
-      - Field: path-pattern
-        Values:
-        - /
-      ListenerArn:
-        Ref: ELBListener
-      Priority: 1
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-  ELBServiceRole:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Action:
-          - sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service:
-            - ecs.amazonaws.com
-      Path: /
-      Policies:
-      - PolicyDocument:
-          Statement:
-          - Action:
-            - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-            - elasticloadbalancing:DeregisterTargets
-            - elasticloadbalancing:Describe*
-            - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-            - elasticloadbalancing:RegisterTargets
-            - ec2:Describe*
-            - ec2:AuthorizeSecurityGroupIngress
-            Effect: Allow
-            Resource: '*'
-        PolicyName: ecs-service
-    Type: AWS::IAM::Role
-  ELBTargetGroup:
-    DependsOn: ELB
-    Properties:
-      HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 2
-      Name: ELBTargetGroup
-      Port: 80
-      Protocol: HTTP
-      UnhealthyThresholdCount: 2
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: ${NetworkStackName}-VpcID
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
   LaunchConfiguration:
     Properties:
+      AssociatePublicIpAddress: true
       IamInstanceProfile:
         Ref: EC2InstanceProfile
       ImageId:

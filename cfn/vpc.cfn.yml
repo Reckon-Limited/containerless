@@ -85,6 +85,7 @@ Resources:
         Ref: Az1PublicCidr
       AvailabilityZone:
         Ref: VpcAz1
+      MapPublicIpOnLaunch: true
       Tags:
       - Key: Name
         Value: Public Subnet AZ 1
@@ -99,6 +100,7 @@ Resources:
         Ref: Az2PublicCidr
       AvailabilityZone:
         Ref: VpcAz2
+      MapPublicIpOnLaunch: true
       Tags:
       - Key: Name
         Value: Public Subnet AZ 2
@@ -114,6 +116,7 @@ Resources:
         Ref: Az3PublicCidr
       AvailabilityZone:
         Ref: VpcAz3
+      MapPublicIpOnLaunch: true
       Tags:
       - Key: Name
         Value: Public Subnet AZ 3
