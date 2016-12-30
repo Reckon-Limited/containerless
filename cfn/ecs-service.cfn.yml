@@ -9,8 +9,7 @@ Resources:
       LoadBalancers:
       - ContainerName: task-01
         ContainerPort: 3000
-        TargetGroupArn:
-          Ref: ELBTargetGroup
+        TargetGroupArn: ELBTargetGroup
       Role:
         Ref: ELBServiceRole
       TaskDefinition:

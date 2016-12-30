@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "@types/aws-sdk": "^0.0.42",
+    "@types/lodash": "^4.14.45",
     "aws-sdk": "^2.7.19",
     "dockerode": "^2.3.1",
-    "dockerode-ts": "^0.3.2"
+    "dockerode-ts": "^0.3.2",
+    "lodash": "^4.17.3"
   }
 }

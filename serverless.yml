@@ -8,18 +8,19 @@ provider:
 plugins:
   - serverlecs-plugin
 
-functions:
-  hello:
-    handler: handler.hello
+# functions:
+#   hello:
+#     handler: handler.hello
 
 custom:
   serverlecs:
     service:
-      cluster: ClusterID
+      cluster: arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ
       repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
       containers:
         hello:
-          path: src
+          srcPath: src
+          path: /hello
           memory: 128
     # blah:
     #   cluster: ClusterID
