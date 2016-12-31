@@ -82,15 +82,13 @@ class ServerlecsPlugin {
 
   compile = () => {
     if (this.hasService()) {
-      this.build();
 
+      this.prepare();
       let services = this.getServices();
       let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
 
-
       _.each(services, (service, name: string) => {
-        this.serverless.cli.log(`Generating cfn for service ${name}`);
-        // service.name = name;
+        this.serverless.cli.log(`Generating cfn resources for service ${name}`);
 
         let definitions = _.map(service.containers, (container: any, name: string) => {
           return this.definition(container);
@@ -120,40 +118,69 @@ class ServerlecsPlugin {
             'ContainerDefinitions': definitions
           }
         }
+
+        resources[`${name}CloudwatchLogGroup`] =  this.logGroup(name);
+
       });
     }
   }
 
   definition = (container: any) => {
     return {
-      Name: `task-${container.name}`,
-      Essential: 'true',
-      Image: container.tag,
-      Memory: container.memory,
-      PortMappings: [
+      'Name': container.name,
+      'Essential': 'true',
+      'Image': container.tag,
+      'Memory': container.memory,
+      'PortMappings': [
         {
-          ContainerPort: 3000
+          'ContainerPort': 3000
         }
-      ]
+      ],
+      'LogConfiguration': {
+        'LogDriver': "awslogs",
+        'Options': {
+          'awslogs-group': {
+            // 'Ref': `${name}CloudwatchLogGroup`
+          },
+          'awslogs-region': {
+            'Ref': 'AWS::Region'
+          },
+          'awslogs-stream-prefix': {
+            'Ref': 'AWS::StackName'
+          }
+        }
+      }
     }
   }
 
-  // 'LogConfiguration': {
-  //   'LogDriver": "awslogs",
-  //   "Options": {
-  //     "awslogs-group": {
-  //       "Ref": "CloudwatchLogGroup"
-  //     },
-  //     "awslogs-region": {
-  //       "Ref": "AWS::Region"
-  //     },
-  //     "awslogs-stream-prefix": {
-  //       "Ref": "AWS::StackName"
-  //     }
-  //   }
-  // },
+  logGroup = (name: string) => {
+    return {
+      'Type': 'AWS::Logs::LogGroup',
+      'Properties': {
+        'LogGroupName': {
+          'Fn::Sub': `${name}-\${AWS::StackName}`
+        },
+        'RetentionInDays': 14
+      }
+    }
+  }
 
   build = () => {
+    if (this.hasService()) {
+
+      this.prepare();
+      let services = this.getServices();
+
+      _.each(services, (service, serviceName: string) => {
+        this.serverless.cli.log(`Building service ${serviceName}`);
+        _.each(service.containers, (container: any) => {
+          this.dockerBuildAndPush(container);
+        });
+      });
+    }
+  }
+
+  prepare = () => {
     if (this.hasService()) {
       let services = this.getServices();
 
@@ -162,17 +189,16 @@ class ServerlecsPlugin {
         tag = Math.floor(Date.now() / 1000);
       }
 
-      _.each(services, (service, name: string) => {
-        this.serverless.cli.log(`Building service ${name} with tag version ${tag}`);
-        service.name = name;
-        _.each(service.containers, (container: any, name: string) => {
-          container.name = name;
+      _.each(services, (service, serviceName: string) => {
+        service.name = serviceName;
+        this.serverless.cli.log(`Preparing service ${serviceName} with tag ${tag}`);
+        _.each(service.containers, (container: any, containerName: string) => {
+          container.name = containerName;
+          container.service = serviceName;
           container.path = `${this.serverless.config.servicePath}/${container.srcPath}`;
-          container.tag = `${service.repository}:${name}-${tag}`;
-          this.dockerBuildAndPush(container);
+          container.tag = `${service.repository}:${serviceName}-${tag}`;
         });
       });
-      console.log(services['service'].containers['hello']);
     }
   }
 
