@@ -5,107 +5,131 @@
     "ServerlessDeploymentBucket": {
       "Type": "AWS::S3::Bucket"
     },
-    "service": {
-      "service": {
-        "Type": "AWS::ECS::Service",
-        "Properties": {
-          "Cluster": "arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ",
-          "DesiredCount": 1,
-          "LoadBalancers": [],
-          "Role": {
-            "Ref": "serviceELBRole"
-          },
-          "TaskDefinition": {
-            "Ref": "serviceTaskDefinition"
-          }
-        }
-      },
-      "serviceELBRole": {
-        "Type": "AWS::IAM::Role",
-        "Properties": {
-          "AssumeRolePolicyDocument": {
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Principal": {
-                  "Service": [
-                    "ecs.amazonaws.com"
-                  ]
-                },
-                "Action": [
-                  "sts:AssumeRole"
-                ]
-              }
-            ]
-          },
-          "Path": "/",
-          "Policies": [
+    "serviceELBRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
             {
-              "PolicyName": "serviceELBRole",
-              "PolicyDocument": {
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "Resource": "*",
-                    "Action": [
-                      "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                      "elasticloadbalancing:DeregisterTargets",
-                      "elasticloadbalancing:Describe*",
-                      "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                      "elasticloadbalancing:RegisterTargets",
-                      "ec2:Describe*",
-                      "ec2:AuthorizeSecurityGroupIngress"
-                    ]
-                  }
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ecs.amazonaws.com"
                 ]
-              }
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
             }
           ]
-        }
-      },
-      "serviceTaskDefinition": {
-        "Type": "AWS::ECS::TaskDefinition",
-        "Properties": {
-          "Family": {
-            "Fn::Sub": "${AWS::StackName}-task"
-          },
-          "ContainerDefinitions": [
-            {
-              "Name": "hello",
-              "Essential": "true",
-              "Image": "005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:service-hello-1483064358",
-              "Memory": 128,
-              "PortMappings": [
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "elb-role-policy",
+            "PolicyDocument": {
+              "Statement": [
                 {
-                  "ContainerPort": 3000
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Action": [
+                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                    "elasticloadbalancing:DeregisterTargets",
+                    "elasticloadbalancing:Describe*",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "elasticloadbalancing:RegisterTargets",
+                    "ec2:Describe*",
+                    "ec2:AuthorizeSecurityGroupIngress"
+                  ]
                 }
-              ],
-              "LogConfiguration": {
-                "LogDriver": "awslogs",
-                "Options": {
-                  "awslogs-group": {
-                    "Ref": "serviceCloudwatchLogGroup"
-                  },
-                  "awslogs-region": {
-                    "Ref": "AWS::Region"
-                  },
-                  "awslogs-stream-prefix": {
-                    "Ref": "AWS::StackName"
-                  }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "serviceELB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Scheme": "internet-facing",
+        "LoadBalancerAttributes": [
+          {
+            "Key": "idle_timeout.timeout_seconds",
+            "Value": 30
+          }
+        ],
+        "Subnets": [],
+        "SecurityGroups": [
+          {
+            "Ref": "PublicSecurityGroup"
+          }
+        ]
+      }
+    },
+    "service": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "Cluster": "arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ",
+        "DesiredCount": 1,
+        "LoadBalancers": [
+          {
+            "ContainerName": "hello",
+            "ContainerPort": 3000,
+            "TargetGroupArn": {
+              "Ref": "ELBTargetGroup"
+            }
+          }
+        ],
+        "Role": {
+          "Ref": "serviceELB"
+        },
+        "TaskDefinition": {
+          "Ref": "serviceTaskDefinition"
+        }
+      }
+    },
+    "serviceTaskDefinition": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "Family": {
+          "Fn::Sub": "${AWS::StackName}-task"
+        },
+        "ContainerDefinitions": [
+          {
+            "Name": "hello",
+            "Essential": "true",
+            "Image": "005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:service-hello-1483064358",
+            "Memory": 128,
+            "PortMappings": [
+              {
+                "ContainerPort": 3000
+              }
+            ],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "serviceCloudwatchLogGroup"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": {
+                  "Ref": "AWS::StackName"
                 }
               }
             }
-          ]
-        }
-      },
-      "serviceCloudwatchLogGroup": {
-        "Type": "AWS::Logs::LogGroup",
-        "Properties": {
-          "LogGroupName": {
-            "Fn::Sub": "service-${AWS::StackName}"
-          },
-          "RetentionInDays": 7
-        }
+          }
+        ]
+      }
+    },
+    "serviceCloudwatchLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "service-${AWS::StackName}"
+        },
+        "RetentionInDays": 7
       }
     }
   },

@@ -64,13 +64,11 @@ class ServerlecsPlugin {
       _.each(services, (opts, serviceName: string) => {
         this.serverless.cli.log(`Generating cfn resources for service ${serviceName}`);
         let service = new Service(opts);
-        // console.log(resource.generate())
-        resources[serviceName] = service.generateResources()
+        _.merge(resources, service.generateResources());
       });
 
     }
   }
-
 
   build = () => {
     if (this.hasService()) {

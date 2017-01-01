@@ -1,11 +1,15 @@
 import _ = require('lodash');
 
+import { ELB } from './elb'
+
 export class Service {
   service: any
   resources: any
+  elb: ELB
 
   constructor(opts: any) {
     this.service = opts;
+    this.elb = new ELB(opts)
   }
 
   get taskDefinitionName() {
@@ -15,73 +19,23 @@ export class Service {
     return `${this.service.name}CloudwatchLogGroup`;
   }
 
-  get elbRoleName() {
-    return `${this.service.name}ELBRole`;
-  }
-
-  get elbRolePolicyName() {
-    return `${this.service.name}ELBRole`;
-  }
-
   generateResources() {
-    let resources: any = {};
+    let resources: any = this.elb.generateResources();
 
+    console.log(resources);
+    
     resources[this.service.name] = {
       'Type': 'AWS::ECS::Service',
       'Properties': {
         'Cluster': this.service.cluster,
         'DesiredCount': this.service.count || 1,
-        'LoadBalancers': [],
+        'LoadBalancers': this.loadBalancers(),
         'Role': {
-          'Ref': this.elbRoleName
+          'Ref': this.elb.name
         },
         'TaskDefinition': {
           'Ref': this.taskDefinitionName
         }
-      }
-    }
-
-    resources[this.elbRoleName] = {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "ecs.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/",
-        "Policies": [
-          {
-            "PolicyName": this.elbRolePolicyName,
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Resource": "*",
-                  "Action": [
-                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                    "elasticloadbalancing:DeregisterTargets",
-                    "elasticloadbalancing:Describe*",
-                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                    "elasticloadbalancing:RegisterTargets",
-                    "ec2:Describe*",
-                    "ec2:AuthorizeSecurityGroupIngress"
-                  ]
-                }
-              ]
-            }
-          }
-        ]
       }
     }
 
@@ -142,7 +96,7 @@ export class Service {
         }
       ],
       'LogConfiguration': {
-        'LogDriver': "awslogs",
+        'LogDriver': 'awslogs',
         'Options': {
           'awslogs-group': {
             'Ref': this.logGroupName

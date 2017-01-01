@@ -1,11 +1,11 @@
+import { ELB } from './elb';
 export declare class Service {
     service: any;
     resources: any;
+    elb: ELB;
     constructor(opts: any);
     readonly taskDefinitionName: string;
     readonly logGroupName: string;
-    readonly elbRoleName: string;
-    readonly elbRolePolicyName: string;
     generateResources(): any;
     loadBalancers: () => {
         'ContainerName': any;

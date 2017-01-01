@@ -1,5 +1,6 @@
 "use strict";
 var _ = require("lodash");
+var elb_1 = require("./elb");
 var Service = (function () {
     function Service(opts) {
         var _this = this;
@@ -36,7 +37,7 @@ var Service = (function () {
                     }
                 ],
                 'LogConfiguration': {
-                    'LogDriver': "awslogs",
+                    'LogDriver': 'awslogs',
                     'Options': {
                         'awslogs-group': {
                             'Ref': _this.logGroupName
@@ -52,6 +53,7 @@ var Service = (function () {
             };
         };
         this.service = opts;
+        this.elb = new elb_1.ELB(opts);
     }
     Object.defineProperty(Service.prototype, "taskDefinitionName", {
         get: function () {
@@ -67,77 +69,21 @@ var Service = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Service.prototype, "elbRoleName", {
-        get: function () {
-            return this.service.name + "ELBRole";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Service.prototype, "elbRolePolicyName", {
-        get: function () {
-            return this.service.name + "ELBRole";
-        },
-        enumerable: true,
-        configurable: true
-    });
     Service.prototype.generateResources = function () {
-        var resources = {};
+        var resources = this.elb.generateResources();
+        console.log(resources);
         resources[this.service.name] = {
             'Type': 'AWS::ECS::Service',
             'Properties': {
                 'Cluster': this.service.cluster,
                 'DesiredCount': this.service.count || 1,
-                'LoadBalancers': [],
+                'LoadBalancers': this.loadBalancers(),
                 'Role': {
-                    'Ref': this.elbRoleName
+                    'Ref': this.elb.name
                 },
                 'TaskDefinition': {
                     'Ref': this.taskDefinitionName
                 }
-            }
-        };
-        resources[this.elbRoleName] = {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "ecs.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
-                        }
-                    ]
-                },
-                "Path": "/",
-                "Policies": [
-                    {
-                        "PolicyName": this.elbRolePolicyName,
-                        "PolicyDocument": {
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Resource": "*",
-                                    "Action": [
-                                        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                                        "elasticloadbalancing:DeregisterTargets",
-                                        "elasticloadbalancing:Describe*",
-                                        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                                        "elasticloadbalancing:RegisterTargets",
-                                        "ec2:Describe*",
-                                        "ec2:AuthorizeSecurityGroupIngress"
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                ]
             }
         };
         resources[this.taskDefinitionName] = {

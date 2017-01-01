@@ -14,8 +14,7 @@ var ServerlecsPlugin = (function () {
                 _.each(services, function (opts, serviceName) {
                     _this.serverless.cli.log("Generating cfn resources for service " + serviceName);
                     var service = new service_1.Service(opts);
-                    // console.log(resource.generate())
-                    resources_1[serviceName] = service.generateResources();
+                    _.merge(resources_1, service.generateResources());
                 });
             }
         };
