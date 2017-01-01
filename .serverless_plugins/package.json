@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@types/chai": "^3.4.34",
+    "chai": "^3.5.0"
+  }
+}

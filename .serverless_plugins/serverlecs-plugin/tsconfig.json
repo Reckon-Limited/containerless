@@ -11,13 +11,7 @@
       "experimentalDecorators": true,
       "declaration": true
     },
-    "files": [
-      ".serverless_plugins/**/*.ts"
-    ],
     "exclude": [
       "node_modules/**"
-    ],
-    "atom": {
-      "rewriteTsconfig": false
-    }
+    ]
 }

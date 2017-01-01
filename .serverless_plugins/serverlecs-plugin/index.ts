@@ -1,6 +1,10 @@
 import AWS = require('aws-sdk');
+
 import _ = require('lodash');
+
 const execSync = require('child_process').execSync;
+
+import { Service } from './service';
 
 interface Command {
   usage: String
@@ -16,42 +20,12 @@ interface Hooks {
   [key: string]: Function;
 }
 
-class Service {
-
-}
-
 interface Serverless {
   cli: any
   config: any
 }
 
-class Container {
-  serverless: Serverless
-  repository: string
-  name: string
-  path: string
-  dir: string
-  // image: string
-
-  constructor(repository: string, name: string, dir: string, servicePath: string, path: string) {
-    // this.serverless = serverless;
-    this.repository = repository;
-    this.name = name;
-    this.dir = dir;
-    this.path = path;
-  }
-
-  get tag() {
-    return `${this.name}-${Math.floor(Date.now() / 1000)}`
-  }
-
-  get image() {
-    return `${this.repository}:${this.tag}`
-  }
-}
-
 // this._serverless.service.provider.compiledCloudFormationTemplate.Resources[permRef] = permission;
-// return self._serverless.cli.log('Function ' + info.FunctionArn + ' is already subscribed to ' + info.TopicArn);
 
 class ServerlecsPlugin {
   private serverless: any;
@@ -87,83 +61,16 @@ class ServerlecsPlugin {
       let services = this.getServices();
       let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
 
-      _.each(services, (service, name: string) => {
-        this.serverless.cli.log(`Generating cfn resources for service ${name}`);
-
-        let definitions = _.map(service.containers, (container: any, name: string) => {
-          return this.definition(container);
-        });;
-
-        resources[name] = {
-          'Type': 'AWS::ECS::Service',
-          'Properties': {
-            'Cluster': service.cluster,
-            'DesiredCount': service.count || 1,
-            'LoadBalancers': [],
-            'Role': {
-              'Ref': 'ELBServiceRole'
-            },
-            'TaskDefinition': {
-              'Ref': `${name}TaskDefinition`
-            }
-          }
-        }
-
-        resources[`${name}TaskDefinition`] = {
-          'Type': 'AWS::ECS::TaskDefinition',
-          'Properties': {
-            'Family': {
-              'Fn::Sub': '${AWS::StackName}-task'
-            },
-            'ContainerDefinitions': definitions
-          }
-        }
-
-        resources[`${name}CloudwatchLogGroup`] =  this.logGroup(name);
-
+      _.each(services, (opts, serviceName: string) => {
+        this.serverless.cli.log(`Generating cfn resources for service ${serviceName}`);
+        let service = new Service(opts);
+        // console.log(resource.generate())
+        resources[serviceName] = service.generateResources()
       });
+
     }
   }
 
-  definition = (container: any) => {
-    return {
-      'Name': container.name,
-      'Essential': 'true',
-      'Image': container.tag,
-      'Memory': container.memory,
-      'PortMappings': [
-        {
-          'ContainerPort': 3000
-        }
-      ],
-      'LogConfiguration': {
-        'LogDriver': "awslogs",
-        'Options': {
-          'awslogs-group': {
-            // 'Ref': `${name}CloudwatchLogGroup`
-          },
-          'awslogs-region': {
-            'Ref': 'AWS::Region'
-          },
-          'awslogs-stream-prefix': {
-            'Ref': 'AWS::StackName'
-          }
-        }
-      }
-    }
-  }
-
-  logGroup = (name: string) => {
-    return {
-      'Type': 'AWS::Logs::LogGroup',
-      'Properties': {
-        'LogGroupName': {
-          'Fn::Sub': `${name}-\${AWS::StackName}`
-        },
-        'RetentionInDays': 14
-      }
-    }
-  }
 
   build = () => {
     if (this.hasService()) {

@@ -1,129 +1,51 @@
 "use strict";
-const _ = require("lodash");
-const execSync = require('child_process').execSync;
-class Service {
-}
-class Container {
-    // image: string
-    constructor(repository, name, dir, servicePath, path) {
-        // this.serverless = serverless;
-        this.repository = repository;
-        this.name = name;
-        this.dir = dir;
-        this.path = path;
-    }
-    get tag() {
-        return `${this.name}-${Math.floor(Date.now() / 1000)}`;
-    }
-    get image() {
-        return `${this.repository}:${this.tag}`;
-    }
-}
+var _ = require("lodash");
+var execSync = require('child_process').execSync;
+var service_1 = require("./service");
 // this._serverless.service.provider.compiledCloudFormationTemplate.Resources[permRef] = permission;
-// return self._serverless.cli.log('Function ' + info.FunctionArn + ' is already subscribed to ' + info.TopicArn);
-class ServerlecsPlugin {
-    constructor(serverless, options) {
-        this.compile = () => {
-            if (this.hasService()) {
-                this.prepare();
-                let services = this.getServices();
-                let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
-                _.each(services, (service, name) => {
-                    this.serverless.cli.log(`Generating cfn resources for service ${name}`);
-                    let definitions = _.map(service.containers, (container, name) => {
-                        return this.definition(container);
-                    });
-                    ;
-                    resources[name] = {
-                        'Type': 'AWS::ECS::Service',
-                        'Properties': {
-                            'Cluster': service.cluster,
-                            'DesiredCount': service.count || 1,
-                            'LoadBalancers': [],
-                            'Role': {
-                                'Ref': 'ELBServiceRole'
-                            },
-                            'TaskDefinition': {
-                                'Ref': `${name}TaskDefinition`
-                            }
-                        }
-                    };
-                    resources[`${name}TaskDefinition`] = {
-                        'Type': 'AWS::ECS::TaskDefinition',
-                        'Properties': {
-                            'Family': {
-                                'Fn::Sub': '${AWS::StackName}-task'
-                            },
-                            'ContainerDefinitions': definitions
-                        }
-                    };
-                    resources[`${name}CloudwatchLogGroup`] = this.logGroup(name);
+var ServerlecsPlugin = (function () {
+    function ServerlecsPlugin(serverless, options) {
+        var _this = this;
+        this.compile = function () {
+            if (_this.hasService()) {
+                _this.prepare();
+                var services = _this.getServices();
+                var resources_1 = _this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+                _.each(services, function (opts, serviceName) {
+                    _this.serverless.cli.log("Generating cfn resources for service " + serviceName);
+                    var service = new service_1.Service(opts);
+                    // console.log(resource.generate())
+                    resources_1[serviceName] = service.generateResources();
                 });
             }
         };
-        this.definition = (container) => {
-            return {
-                'Name': container.name,
-                'Essential': 'true',
-                'Image': container.tag,
-                'Memory': container.memory,
-                'PortMappings': [
-                    {
-                        'ContainerPort': 3000
-                    }
-                ],
-                'LogConfiguration': {
-                    'LogDriver': "awslogs",
-                    'Options': {
-                        'awslogs-group': {},
-                        'awslogs-region': {
-                            'Ref': 'AWS::Region'
-                        },
-                        'awslogs-stream-prefix': {
-                            'Ref': 'AWS::StackName'
-                        }
-                    }
-                }
-            };
-        };
-        this.logGroup = (name) => {
-            return {
-                'Type': 'AWS::Logs::LogGroup',
-                'Properties': {
-                    'LogGroupName': {
-                        'Fn::Sub': `${name}-\${AWS::StackName}`
-                    },
-                    'RetentionInDays': 14
-                }
-            };
-        };
-        this.build = () => {
-            if (this.hasService()) {
-                this.prepare();
-                let services = this.getServices();
-                _.each(services, (service, serviceName) => {
-                    this.serverless.cli.log(`Building service ${serviceName}`);
-                    _.each(service.containers, (container) => {
-                        this.dockerBuildAndPush(container);
+        this.build = function () {
+            if (_this.hasService()) {
+                _this.prepare();
+                var services = _this.getServices();
+                _.each(services, function (service, serviceName) {
+                    _this.serverless.cli.log("Building service " + serviceName);
+                    _.each(service.containers, function (container) {
+                        _this.dockerBuildAndPush(container);
                     });
                 });
             }
         };
-        this.prepare = () => {
-            if (this.hasService()) {
-                let services = this.getServices();
-                let tag = this.serverless.processedInput.options.tag;
-                if (!tag) {
-                    tag = Math.floor(Date.now() / 1000);
+        this.prepare = function () {
+            if (_this.hasService()) {
+                var services = _this.getServices();
+                var tag_1 = _this.serverless.processedInput.options.tag;
+                if (!tag_1) {
+                    tag_1 = Math.floor(Date.now() / 1000);
                 }
-                _.each(services, (service, serviceName) => {
+                _.each(services, function (service, serviceName) {
                     service.name = serviceName;
-                    this.serverless.cli.log(`Preparing service ${serviceName} with tag ${tag}`);
-                    _.each(service.containers, (container, containerName) => {
+                    _this.serverless.cli.log("Preparing service " + serviceName + " with tag " + tag_1);
+                    _.each(service.containers, function (container, containerName) {
                         container.name = containerName;
                         container.service = serviceName;
-                        container.path = `${this.serverless.config.servicePath}/${container.srcPath}`;
-                        container.tag = `${service.repository}:${serviceName}-${tag}`;
+                        container.path = _this.serverless.config.servicePath + "/" + container.srcPath;
+                        container.tag = service.repository + ":" + serviceName + "-" + tag_1;
                     });
                 });
             }
@@ -144,37 +66,38 @@ class ServerlecsPlugin {
             'ecs-build:build': this.build,
         };
     }
-    dockerBuildAndPush(container) {
+    ServerlecsPlugin.prototype.dockerBuildAndPush = function (container) {
         this.dockerBuild(container.path, container.tag);
         this.dockerPush(container.tag);
-    }
-    dockerPush(tag) {
-        let command = `docker push ${tag}`;
-        this.serverless.cli.log(`Pushing image ${tag}`);
+    };
+    ServerlecsPlugin.prototype.dockerPush = function (tag) {
+        var command = "docker push " + tag;
+        this.serverless.cli.log("Pushing image " + tag);
         if (process.env.SLS_DEBUG) {
             this.serverless.cli.log(command);
         }
         if (!process.env.SLS_DEBUG) {
-            let result = execSync(command);
+            var result = execSync(command);
             this.serverless.cli.log(result);
         }
-    }
-    dockerBuild(path, tag) {
-        let command = `docker build -t ${tag} ${path}`;
-        this.serverless.cli.log(`Building image ${tag} at ${path}`);
+    };
+    ServerlecsPlugin.prototype.dockerBuild = function (path, tag) {
+        var command = "docker build -t " + tag + " " + path;
+        this.serverless.cli.log("Building image " + tag + " at " + path);
         if (process.env.SLS_DEBUG) {
             this.serverless.cli.log(command);
         }
-        let result = execSync(command);
+        var result = execSync(command);
         this.serverless.cli.log(result);
-    }
-    getServices() {
+    };
+    ServerlecsPlugin.prototype.getServices = function () {
         return this.serverless.service.custom.serverlecs;
-    }
-    hasService() {
+    };
+    ServerlecsPlugin.prototype.hasService = function () {
         return this.serverless.service.custom && this.serverless.service.custom.serverlecs;
-    }
-}
+    };
+    return ServerlecsPlugin;
+}());
 module.exports = ServerlecsPlugin;
 // dockerTag(tag: string, image: string) {
 //   let command = `docker tag ${this.tag} ${this.image}`;
