@@ -17,6 +17,7 @@ var opts = {
         { name: 'Container' }
     ]
 };
+// @suite
 var ServiceTest = (function () {
     function ServiceTest() {
     }
@@ -44,6 +45,3 @@ __decorate([
 __decorate([
     mocha_typescript_1.test('Container Resource')
 ], ServiceTest.prototype, "assert_container_resource", null);
-ServiceTest = __decorate([
-    mocha_typescript_1.suite
-], ServiceTest);

@@ -75,7 +75,7 @@ var Service = (function () {
         resources[this.service.name] = {
             'Type': 'AWS::ECS::Service',
             'Properties': {
-                'Cluster': this.service.cluster,
+                'Cluster': this.service.clusterId,
                 'DesiredCount': this.service.count || 1,
                 'LoadBalancers': this.loadBalancers(),
                 'Role': {

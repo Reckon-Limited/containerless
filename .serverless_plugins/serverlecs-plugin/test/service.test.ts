@@ -15,7 +15,7 @@ const opts = {
   ]
 }
 
-@suite
+// @suite
 class ServiceTest {
 
   resources: any;
