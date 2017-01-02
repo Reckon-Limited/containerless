@@ -15,14 +15,24 @@ plugins:
 custom:
   serverlecs:
     service:
-      cluster: arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ
+      clusterId: arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ
       repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
+      load_balancer:        
+        vpc:
+        securityGroup:
+        subnets:
+          - Fn::ImportValue:
+              Fn::Sub:
+                "${NetworkStackName}-PublicSubnetAz1"
+      # load_balancer:
+      #   targetGroupArn:
+
       # logRetention: 14
       # DesiredCount: 1
       containers:
         hello:
           srcPath: src
-          path: /hello
+          pathPattern: /hello
           memory: 128
           # port: 3000
 
