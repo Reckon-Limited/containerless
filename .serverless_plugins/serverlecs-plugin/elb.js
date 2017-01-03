@@ -1,56 +1,94 @@
 "use strict";
 var ELB = (function () {
-    function ELB(service) {
-        this.service = service;
-        this.opts = this.service.loadBalancer;
-        if (!this.service.loadBalancer) {
-            throw new TypeError('Service must define a Load Balancer');
-        }
+    function ELB(opts) {
+        this.opts = opts;
         if (!this.opts.vpcId) {
             throw new TypeError('Load Balancer must define a VPC Id');
         }
         if (!this.opts.subnets) {
             throw new TypeError('Load Balancer must define at least one subnet');
         }
+        if (!this.opts.security_group) {
+            throw new TypeError('Load Balancer must define a security group');
+        }
     }
     Object.defineProperty(ELB.prototype, "name", {
         get: function () {
-            return this.service.name + "ELB";
+            return "ContainerlessELB";
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ELB.prototype, "elbRoleName", {
+    Object.defineProperty(ELB.prototype, "roleName", {
         get: function () {
-            return this.service.name + "ELBRole";
+            return "ContainerlessELBRole";
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ELB.prototype, "elbListenerName", {
+    Object.defineProperty(ELB.prototype, "listenerName", {
         get: function () {
-            return this.service.name + "HTTPListener";
+            return "ContainerlessListener";
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ELB.prototype, "elbTargetGroupName", {
+    Object.defineProperty(ELB.prototype, "targetGroupName", {
         get: function () {
-            return this.service.name + "TargetGroup";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ELB.prototype, "elbSecurityGroup", {
-        get: function () {
-            return this.service.name + "SecurityGroup";
+            return "ContainerlessDefaultTargetGroup";
         },
         enumerable: true,
         configurable: true
     });
     ELB.prototype.generateResources = function () {
         var resources = {};
-        resources[this.elbRoleName] = {
+        resources[this.roleName] = this.rolePolicy();
+        resources[this.name] = {
+            'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
+            'Properties': {
+                'Scheme': 'internet-facing',
+                'LoadBalancerAttributes': [
+                    {
+                        'Key': 'idle_timeout.timeout_seconds',
+                        'Value': 30
+                    }
+                ],
+                'Subnets': this.opts.subnets,
+                'SecurityGroups': [this.opts.security_group]
+            }
+        };
+        resources[this.listenerName] = {
+            'Type': 'AWS::ElasticLoadBalancingV2::Listener',
+            'DependsOn': this.roleName,
+            'Properties': {
+                'DefaultActions': [
+                    {
+                        'Type': 'forward',
+                        'TargetGroupArn': {
+                            'Ref': this.targetGroupName
+                        }
+                    }
+                ],
+                'LoadBalancerArn': {
+                    'Ref': this.name
+                },
+                'Port': '80',
+                'Protocol': 'HTTP'
+            }
+        };
+        resources[this.targetGroupName] = {
+            'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
+            'DependsOn': this.name,
+            'Properties': {
+                'Port': 80,
+                'Protocol': 'HTTP',
+                'VpcId': this.opts.vpcId
+            }
+        };
+        return resources;
+    };
+    ELB.prototype.rolePolicy = function () {
+        return {
             'Type': 'AWS::IAM::Role',
             'Properties': {
                 'AssumeRolePolicyDocument': {
@@ -93,25 +131,17 @@ var ELB = (function () {
                 ]
             }
         };
-        resources[this.name] = {
-            'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
-            'Properties': {
-                'Scheme': 'internet-facing',
-                'LoadBalancerAttributes': [
-                    {
-                        'Key': 'idle_timeout.timeout_seconds',
-                        'Value': 30
-                    }
-                ],
-                'Subnets': this.opts.subnets,
-                'SecurityGroups': [
-                    {
-                        'Ref': this.elbSecurityGroup
-                    }
-                ]
-            }
-        };
-        resources[this.elbSecurityGroup] = {
+    };
+    Object.defineProperty(ELB.prototype, "securityGroupName", {
+        get: function () {
+            return "ContainerlessSecurityGroup";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ELB.prototype.securityGroup = function () {
+        var resources = {};
+        resources[this.securityGroupName] = {
             'Type': 'AWS::EC2::SecurityGroup',
             'Properties': {
                 'VpcId': {
@@ -123,21 +153,19 @@ var ELB = (function () {
             'Type': 'AWS::EC2::SecurityGroupIngress',
             'Properties': {
                 'GroupId': {
-                    'Ref': this.elbSecurityGroup
+                    'Ref': this.securityGroupName
                 },
                 'IpProtocol': 'tcp',
                 'FromPort': 31000,
                 'ToPort': 61000,
-                'SourceSecurityGroupId': {
-                    'Ref': this.service.securityGroupId
-                }
+                'SourceSecurityGroupId': {}
             }
         };
         resources['HTTP'] = {
             'Type': 'AWS::EC2::SecurityGroupIngress',
             'Properties': {
                 'GroupId': {
-                    'Ref': this.elbSecurityGroup
+                    'Ref': this.securityGroupName
                 },
                 'IpProtocol': 'tcp',
                 'FromPort': '80',
@@ -149,46 +177,12 @@ var ELB = (function () {
             'Type': 'AWS::EC2::SecurityGroupIngress',
             'Properties': {
                 'GroupId': {
-                    'Ref': this.elbSecurityGroup
+                    'Ref': this.securityGroupName
                 },
                 'IpProtocol': 'tcp',
                 'FromPort': '443',
                 'ToPort': '443',
                 'CidrIp': '0.0.0.0/0'
-            }
-        };
-        resources[this.elbListenerName] = {
-            'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-            'DependsOn': 'ELBServiceRole',
-            'Properties': {
-                'DefaultActions': [
-                    {
-                        'Type': 'forward',
-                        'TargetGroupArn': {
-                            'Ref': 'ELBTargetGroup'
-                        }
-                    }
-                ],
-                'LoadBalancerArn': {
-                    'Ref': 'ELB'
-                },
-                'Port': '80',
-                'Protocol': 'HTTP'
-            }
-        };
-        resources[this.elbTargetGroupName] = {
-            'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-            'DependsOn': 'ELB',
-            'Properties': {
-                'HealthCheckIntervalSeconds': 10,
-                'HealthCheckPath': '/',
-                'HealthCheckProtocol': 'HTTP',
-                'HealthCheckTimeoutSeconds': 5,
-                'HealthyThresholdCount': 2,
-                'Port': 80,
-                'Protocol': 'HTTP',
-                'UnhealthyThresholdCount': 2,
-                'VpcId': this.opts.vpcId
             }
         };
         return resources;

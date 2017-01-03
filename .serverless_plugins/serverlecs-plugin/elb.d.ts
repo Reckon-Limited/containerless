@@ -1,15 +1,17 @@
 export interface ELBOpts {
     vpcId: string;
     subnets: Array<string>;
+    security_group: string;
 }
 export declare class ELB {
-    service: any;
     opts: ELBOpts;
-    constructor(service: any);
+    constructor(opts: any);
     readonly name: string;
-    readonly elbRoleName: string;
-    readonly elbListenerName: string;
-    readonly elbTargetGroupName: string;
-    readonly elbSecurityGroup: string;
+    readonly roleName: string;
+    readonly listenerName: string;
+    readonly targetGroupName: string;
     generateResources(): any;
+    rolePolicy(): any;
+    readonly securityGroupName: string;
+    securityGroup(): any;
 }

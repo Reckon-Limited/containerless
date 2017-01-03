@@ -25,13 +25,20 @@ Mappings:
     us-west-2:
       AMIID: ami-a2ca61c2
 Outputs:
-  ClusterID:
-    Description: ClusterID
+  ClusterId:
+    Description: ClusterId
     Export:
       Name:
-        Fn::Sub: ${AWS::StackName}-ClusterID
+        Fn::Sub: ${AWS::StackName}-ClusterId
     Value:
       Ref: ECSCluster
+  PublicSecurityGroup:
+    Description: SecurityGroup
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-SecurityGroup
+    Value:
+      Ref: PublicSecurityGroup
 Parameters:
   DesiredCapacity:
     Default: 1
@@ -89,7 +96,7 @@ Resources:
   AutoScalingGroup:
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M
+        Timeout: PT5M
     Properties:
       DesiredCapacity:
         Ref: DesiredCapacity
@@ -103,7 +110,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     UpdatePolicy:
       AutoScalingReplacingUpdate:
-        PauseTime: PT60M
+        PauseTime: PT5M
         WillReplace: "true"
   AutoscalingRole:
     Properties:
@@ -240,4 +247,3 @@ Resources:
       IpProtocol: tcp
       ToPort: "22"
     Type: AWS::EC2::SecurityGroupIngress
-

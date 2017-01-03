@@ -13,28 +13,37 @@ plugins:
 #     handler: handler.hello
 
 custom:
-  serverlecs:
-    service:
-      clusterId: arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ
-      repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
-      load_balancer:        
-        vpc:
-        securityGroup:
-        subnets:
-          - Fn::ImportValue:
-              Fn::Sub:
-                "${NetworkStackName}-PublicSubnetAz1"
+  containerless:
+    clusterId: arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N
+    repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
+    load_balancer:
+      # vpcId: vpc-7a93541e
+      vpcId:
+        Fn::ImportValue: triple-az-vpc-VpcID
+      security_group:
+        Fn::ImportValue: vtha-SecurityGroup
+      subnets:
+        - Fn::ImportValue: triple-az-vpc-PublicSubnetAz1
+        - Fn::ImportValue: triple-az-vpc-PublicSubnetAz2
+        - Fn::ImportValue: triple-az-vpc-PublicSubnetAz3
+    applications:
+      hello-1:
+        srcPath: src-1
+        urlPath: / 
+        port: 3000
+        memory: 128
+      # hello-2:
+      #   srcPath: src-2
+      #   memory: 128
+
+          # port: 3000
+
       # load_balancer:
       #   targetGroupArn:
-
+      #   securityGroup:
+      #
       # logRetention: 14
       # DesiredCount: 1
-      containers:
-        hello:
-          srcPath: src
-          pathPattern: /hello
-          memory: 128
-          # port: 3000
 
     # blah:
     #   cluster: ClusterID

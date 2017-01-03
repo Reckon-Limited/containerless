@@ -3,19 +3,14 @@ import * as _ from 'lodash';
 export interface ELBOpts {
   vpcId: string
   subnets: Array<string>
+  security_group: string
 }
 
 export class ELB {
-  service: any
   opts: ELBOpts
 
-  constructor(service: any) {
-    this.service = service;
-    this.opts = this.service.loadBalancer;
-
-    if (!this.service.loadBalancer) {
-      throw new TypeError('Service must define a Load Balancer');
-    }
+  constructor(opts: any) {
+    this.opts = opts;
 
     if (!this.opts.vpcId) {
        throw new TypeError('Load Balancer must define a VPC Id');
@@ -24,32 +19,83 @@ export class ELB {
     if (!this.opts.subnets) {
        throw new TypeError('Load Balancer must define at least one subnet');
     }
+
+    if (!this.opts.security_group) {
+       throw new TypeError('Load Balancer must define a security group');
+    }
   }
 
   get name() {
-    return `${this.service.name}ELB`;
+    return `ContainerlessELB`;
   }
 
-  get elbRoleName() {
-    return `${this.service.name}ELBRole`;
+  get roleName() {
+    return `ContainerlessELBRole`;
   }
 
-  get elbListenerName() {
-    return `${this.service.name}HTTPListener`;
+  get listenerName() {
+    return `ContainerlessListener`;
   }
 
-  get elbTargetGroupName() {
-    return `${this.service.name}TargetGroup`;
-  }
-
-  get elbSecurityGroup() {
-    return `${this.service.name}SecurityGroup`;
+  get targetGroupName() {
+    return `ContainerlessDefaultTargetGroup`;
   }
 
   generateResources() {
     let resources:any = {}
 
-    resources[this.elbRoleName] = {
+    resources[this.roleName] = this.rolePolicy();
+
+    resources[this.name] = {
+      'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
+      'Properties': {
+        'Scheme': 'internet-facing',
+        'LoadBalancerAttributes': [
+          {
+            'Key': 'idle_timeout.timeout_seconds',
+            'Value': 30
+          }
+        ],
+        'Subnets': this.opts.subnets,
+        'SecurityGroups': [this.opts.security_group]
+      }
+    }
+
+    resources[this.listenerName] = {
+      'Type': 'AWS::ElasticLoadBalancingV2::Listener',
+      'DependsOn': this.roleName,
+      'Properties': {
+        'DefaultActions': [
+          {
+            'Type': 'forward',
+            'TargetGroupArn': {
+              'Ref': this.targetGroupName
+            }
+          }
+        ],
+        'LoadBalancerArn': {
+          'Ref': this.name
+        },
+        'Port': '80',
+        'Protocol': 'HTTP'
+      }
+    }
+
+    resources[this.targetGroupName] = {
+      'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
+      'DependsOn': this.name,
+      'Properties': {
+        'Port': 80,
+        'Protocol': 'HTTP',
+        'VpcId': this.opts.vpcId
+      }
+    }
+
+    return resources;
+  }
+
+  rolePolicy(): any {
+    return {
       'Type': 'AWS::IAM::Role',
       'Properties': {
         'AssumeRolePolicyDocument': {
@@ -92,27 +138,16 @@ export class ELB {
         ]
       }
     }
+  }
 
-    resources[this.name] = {
-      'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
-      'Properties': {
-        'Scheme': 'internet-facing',
-        'LoadBalancerAttributes': [
-          {
-            'Key': 'idle_timeout.timeout_seconds',
-            'Value': 30
-          }
-        ],
-        'Subnets': this.opts.subnets,
-        'SecurityGroups': [
-          {
-            'Ref': this.elbSecurityGroup
-          }
-        ]
-      }
-    }
+  get securityGroupName() {
+    return `ContainerlessSecurityGroup`;
+  }
 
-    resources[this.elbSecurityGroup] = {
+  securityGroup(): any {
+    let resources: any = {}
+
+    resources[this.securityGroupName] = {
        'Type': 'AWS::EC2::SecurityGroup',
        'Properties': {
          'VpcId': {
@@ -125,13 +160,13 @@ export class ELB {
       'Type': 'AWS::EC2::SecurityGroupIngress',
       'Properties': {
          'GroupId': {
-           'Ref': this.elbSecurityGroup
+           'Ref': this.securityGroupName
          },
          'IpProtocol': 'tcp',
          'FromPort': 31000,
          'ToPort': 61000,
          'SourceSecurityGroupId': {
-           'Ref': this.service.securityGroupId
+          //  'Ref': this.securityGroupId
          }
       }
     }
@@ -140,7 +175,7 @@ export class ELB {
       'Type': 'AWS::EC2::SecurityGroupIngress',
       'Properties': {
         'GroupId': {
-          'Ref': this.elbSecurityGroup
+          'Ref': this.securityGroupName
         },
         'IpProtocol': 'tcp',
         'FromPort': '80',
@@ -153,48 +188,12 @@ export class ELB {
       'Type': 'AWS::EC2::SecurityGroupIngress',
       'Properties': {
         'GroupId': {
-          'Ref': this.elbSecurityGroup
+          'Ref': this.securityGroupName
         },
         'IpProtocol': 'tcp',
         'FromPort': '443',
         'ToPort': '443',
         'CidrIp': '0.0.0.0/0'
-      }
-    }
-
-    resources[this.elbListenerName] = {
-      'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-      'DependsOn': 'ELBServiceRole',
-      'Properties': {
-        'DefaultActions': [
-          {
-            'Type': 'forward',
-            'TargetGroupArn': {
-              'Ref': 'ELBTargetGroup'
-            }
-          }
-        ],
-        'LoadBalancerArn': {
-          'Ref': 'ELB'
-        },
-        'Port': '80',
-        'Protocol': 'HTTP'
-      }
-    }
-
-    resources[this.elbTargetGroupName] = {
-      'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-      'DependsOn': 'ELB',
-      'Properties': {
-        'HealthCheckIntervalSeconds': 10,
-        'HealthCheckPath': '/',
-        'HealthCheckProtocol': 'HTTP',
-        'HealthCheckTimeoutSeconds': 5,
-        'HealthyThresholdCount': 2,
-        'Port': 80,
-        'Protocol': 'HTTP',
-        'UnhealthyThresholdCount': 2,
-        'VpcId': this.opts.vpcId
       }
     }
 

@@ -5,6 +5,7 @@ import _ = require('lodash');
 const execSync = require('child_process').execSync;
 
 import { Service } from './service';
+import { ELB } from './elb';
 
 interface Command {
   usage: String
@@ -29,15 +30,22 @@ interface Serverless {
 
 class ServerlecsPlugin {
   private serverless: any;
+  private service: any
+  private applications: Array<any>
+
   private options: any;
   private commands: Commands;
   private hooks: Hooks;
+
   provider: String
 
   constructor(serverless: any, options: any) {
     this.serverless = serverless;
     this.options = options;
     this.provider = 'aws';
+
+    this.service = this.getService();
+    this.applications = this.prepare();
 
     this.commands = {
       "ecs-build": {
@@ -55,56 +63,47 @@ class ServerlecsPlugin {
   }
 
   compile = () => {
-    if (this.hasService()) {
 
-      this.prepare();
-      let services = this.getServices();
-      let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+    let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
 
-      _.each(services, (opts, serviceName: string) => {
-        this.serverless.cli.log(`Generating cfn resources for service ${serviceName}`);
-        let service = new Service(opts);
-        _.merge(resources, service.generateResources());
-      });
+    let elb = new ELB(this.service.load_balancer);
 
-    }
+    _.merge(resources, elb.generateResources());
+
+    _.each(this.applications, (app) => {
+      this.serverless.cli.log(`Generating cfn resources for service ${app.name}`);
+      let service = new Service(app);
+      _.merge(resources, service.generateResources());
+    });
+
   }
 
   build = () => {
-    if (this.hasService()) {
-
-      this.prepare();
-      let services = this.getServices();
-
-      _.each(services, (service, serviceName: string) => {
-        this.serverless.cli.log(`Building service ${serviceName}`);
-        _.each(service.containers, (container: any) => {
-          this.dockerBuildAndPush(container);
-        });
-      });
-    }
+    _.each(this.applications, (app, appName: string) => {
+      this.serverless.cli.log(`Building service ${appName}`);
+      this.dockerBuildAndPush(app);
+    });
   }
 
   prepare = () => {
-    if (this.hasService()) {
-      let services = this.getServices();
 
       let tag = this.serverless.processedInput.options.tag;
       if (!tag) {
         tag = Math.floor(Date.now() / 1000);
       }
 
-      _.each(services, (service, serviceName: string) => {
-        service.name = serviceName;
-        this.serverless.cli.log(`Preparing service ${serviceName} with tag ${tag}`);
-        _.each(service.containers, (container: any, containerName: string) => {
-          container.name = containerName;
-          container.service = serviceName;
-          container.path = `${this.serverless.config.servicePath}/${container.srcPath}`;
-          container.tag = `${service.repository}:${serviceName}-${tag}`;
-        });
+      this.serverless.cli.log(`Preparing containerless service with tag ${tag}`);
+      return _.map(this.service.applications, (app:any, appName: string) => {
+        let obj = {
+          name: appName,
+          clusterId: this.service.clusterId,
+          load_balancer: this.service.load_balancer,
+          path: `${this.serverless.config.servicePath}/${app.srcPath}`,
+          image: `${this.service.repository}:-${appName}-${tag}`
+        }
+        return _.merge(app, obj);
       });
-    }
+
   }
 
   dockerBuildAndPush(container: {tag: string, path: string}) {
@@ -139,12 +138,14 @@ class ServerlecsPlugin {
     this.serverless.cli.log(result);
   }
 
-  getServices() {
-    return this.serverless.service.custom.serverlecs;
+  getService() {
+    if (this.hasService) {
+      return this.serverless.service.custom.containerless;
+    }
   }
 
   hasService() {
-    return this.serverless.service.custom && this.serverless.service.custom.serverlecs;
+    return this.serverless.service.custom && this.serverless.service.custom.containerless;
   }
 }
 

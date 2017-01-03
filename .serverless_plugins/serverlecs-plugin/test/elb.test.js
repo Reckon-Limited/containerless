@@ -9,12 +9,10 @@ var mocha_typescript_1 = require("mocha-typescript");
 var chai_1 = require("chai");
 var elb_1 = require("../elb");
 var _ = require("lodash");
-var service = {
-    name: 'Blah',
-    loadBalancer: {
-        vpcId: 'blah:vtha',
-        subnets: ['subnet-a']
-    }
+var opts = {
+    vpcId: 'blah:vtha',
+    subnets: ['subnet-a'],
+    security_group: 'vtha'
 };
 // repository: 'blah/vtha',
 // cluster:    'arn:blah:vtha',
@@ -25,15 +23,16 @@ var ServiceTest = (function () {
     function ServiceTest() {
     }
     ServiceTest.prototype.before = function () {
-        var elb = new elb_1.ELB(service);
+        var elb = new elb_1.ELB(opts);
         this.resources = elb.generateResources();
+        console.log(this.resources);
     };
     ServiceTest.prototype.assert_elb_resource = function () {
-        var result = _.get(this.resources, 'BlahELB.Type');
+        var result = _.get(this.resources, 'ContainerlessELB.Type');
         chai_1.expect(result).to.eq('AWS::ElasticLoadBalancingV2::LoadBalancer');
     };
     ServiceTest.prototype.assert_elb_vpcid = function () {
-        var result = _.get(this.resources, 'BlahTargetGroup.Properties.VpcId');
+        var result = _.get(this.resources, 'ContainerlessDefaultTargetGroup.Properties.VpcId');
         chai_1.expect(result).to.eq('blah:vtha');
     };
     return ServiceTest;

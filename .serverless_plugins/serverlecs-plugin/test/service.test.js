@@ -12,30 +12,34 @@ var _ = require("lodash");
 var opts = {
     name: 'Blah',
     repository: 'blah/vtha',
-    cluster: 'arn:blah:vtha',
-    containers: [
-        { name: 'Container' }
-    ]
+    clusterId: 'arn:blah:vtha',
+    port: 3000,
+    path: '/blah/vtha/',
+    load_balancer: {
+        vpcId: 'vpc-123456',
+        security_group: 'sg-123456',
+        subnets: ['subnet-123456']
+    }
 };
-// @suite
 var ServiceTest = (function () {
     function ServiceTest() {
     }
     ServiceTest.prototype.before = function () {
         var service = new service_1.Service(opts);
         this.resources = service.generateResources();
+        console.log(this.resources);
     };
     ServiceTest.prototype.assert_service_resource = function () {
-        var result = _.get(this.resources, 'Blah.Type');
+        var result = _.get(this.resources, 'blah.Type');
         chai_1.expect(result).to.eq('AWS::ECS::Service');
-        result = _.get(this.resources, 'Blah.Properties.Cluster');
-        chai_1.expect(result).to.eq(opts.cluster);
+        result = _.get(this.resources, 'blah.Properties.Cluster');
+        chai_1.expect(result).to.eq(opts.clusterId);
     };
     ServiceTest.prototype.assert_container_resource = function () {
-        var result = _.get(this.resources, 'BlahTaskDefinition.Type');
+        var result = _.get(this.resources, 'blahTaskDefinition.Type');
         chai_1.expect(result).to.eq('AWS::ECS::TaskDefinition');
-        result = _.get(this.resources, 'BlahTaskDefinition.Properties.ContainerDefinitions[0].Name');
-        chai_1.expect(result).to.eq('Container');
+        result = _.get(this.resources, 'blahTaskDefinition.Properties.ContainerDefinitions[0].Name');
+        chai_1.expect(result).to.eq('blah');
     };
     return ServiceTest;
 }());
@@ -45,3 +49,6 @@ __decorate([
 __decorate([
     mocha_typescript_1.test('Container Resource')
 ], ServiceTest.prototype, "assert_container_resource", null);
+ServiceTest = __decorate([
+    mocha_typescript_1.suite
+], ServiceTest);

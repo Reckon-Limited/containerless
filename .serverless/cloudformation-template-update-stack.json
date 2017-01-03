@@ -5,7 +5,7 @@
     "ServerlessDeploymentBucket": {
       "Type": "AWS::S3::Bucket"
     },
-    "serviceELBRole": {
+    "ContainerlessELBRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -48,7 +48,7 @@
         ]
       }
     },
-    "serviceELB": {
+    "ContainerlessELB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
         "Scheme": "internet-facing",
@@ -58,37 +58,77 @@
             "Value": 30
           }
         ],
-        "Subnets": [],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz1"
+          },
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz2"
+          },
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz3"
+          }
+        ],
         "SecurityGroups": [
           {
-            "Ref": "PublicSecurityGroup"
+            "Fn::ImportValue": "vtha-SecurityGroup"
           }
         ]
       }
     },
-    "service": {
+    "ContainerlessListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "DependsOn": "ContainerlessELBRole",
+      "Properties": {
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "ContainerlessDefaultTargetGroup"
+            }
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "ContainerlessELB"
+        },
+        "Port": "80",
+        "Protocol": "HTTP"
+      }
+    },
+    "ContainerlessDefaultTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "DependsOn": "ContainerlessELB",
+      "Properties": {
+        "Port": 80,
+        "Protocol": "HTTP",
+        "VpcId": {
+          "Fn::ImportValue": "triple-az-vpc-VpcID"
+        }
+      }
+    },
+    "hello1": {
       "Type": "AWS::ECS::Service",
       "Properties": {
-        "Cluster": "arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-11NSGX52FXRSZ",
+        "Cluster": "arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N",
         "DesiredCount": 1,
         "LoadBalancers": [
           {
-            "ContainerName": "hello",
+            "ContainerName": "hello1",
             "ContainerPort": 3000,
             "TargetGroupArn": {
-              "Ref": "ELBTargetGroup"
+              "Ref": "hello1TargetGroup"
             }
           }
         ],
         "Role": {
-          "Ref": "serviceELB"
+          "Ref": "ContainerlessELBRole"
         },
         "TaskDefinition": {
-          "Ref": "serviceTaskDefinition"
+          "Ref": "hello1TaskDefinition"
         }
       }
     },
-    "serviceTaskDefinition": {
+    "hello1TaskDefinition": {
       "Type": "AWS::ECS::TaskDefinition",
       "Properties": {
         "Family": {
@@ -96,9 +136,9 @@
         },
         "ContainerDefinitions": [
           {
-            "Name": "hello",
+            "Name": "hello1",
             "Essential": "true",
-            "Image": "005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:service-hello-1483064358",
+            "Image": "005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:-hello-1-hello-1483064358",
             "Memory": 128,
             "PortMappings": [
               {
@@ -109,7 +149,7 @@
               "LogDriver": "awslogs",
               "Options": {
                 "awslogs-group": {
-                  "Ref": "serviceCloudwatchLogGroup"
+                  "Ref": "hello1CloudwatchLogGroup"
                 },
                 "awslogs-region": {
                   "Ref": "AWS::Region"
@@ -123,11 +163,11 @@
         ]
       }
     },
-    "serviceCloudwatchLogGroup": {
+    "hello1CloudwatchLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
         "LogGroupName": {
-          "Fn::Sub": "service-${AWS::StackName}"
+          "Fn::Sub": "hello1-${AWS::StackName}"
         },
         "RetentionInDays": 7
       }

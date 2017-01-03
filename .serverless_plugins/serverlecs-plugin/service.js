@@ -1,39 +1,18 @@
 "use strict";
 var _ = require("lodash");
-var elb_1 = require("./elb");
+var listener_1 = require("./listener");
 var Service = (function () {
     function Service(opts) {
         var _this = this;
-        this.loadBalancers = function () {
-            return _.map(_this.service.containers, function (container) {
-                return _this.loadBalancer(container);
-            });
-            ;
-        };
-        this.loadBalancer = function (container) {
+        this.definition = function () {
             return {
-                'ContainerName': container.name,
-                'ContainerPort': container.port || 3000,
-                'TargetGroupArn': {
-                    'Ref': 'ELBTargetGroup'
-                }
-            };
-        };
-        this.definitions = function () {
-            return _.map(_this.service.containers, function (container) {
-                return _this.definition(container);
-            });
-            ;
-        };
-        this.definition = function (container) {
-            return {
-                'Name': container.name,
+                'Name': _this.name,
                 'Essential': 'true',
-                'Image': container.tag,
-                'Memory': container.memory,
+                'Image': _this.opts.image,
+                'Memory': _this.opts.memory || 128,
                 'PortMappings': [
                     {
-                        'ContainerPort': container.port || 3000
+                        'ContainerPort': _this.opts.port
                     }
                 ],
                 'LogConfiguration': {
@@ -52,34 +31,48 @@ var Service = (function () {
                 }
             };
         };
-        this.service = opts;
-        this.elb = new elb_1.ELB(opts);
+        this.opts = opts;
+        this.listener = new listener_1.Listener(this.name, opts.load_balancer.vpcId, opts.port, opts.path);
+        if (!this.opts.clusterId) {
+            throw new TypeError('Service must define a Cluster Id');
+        }
+        if (!this.opts.port) {
+            throw new TypeError('Application must define a Port');
+        }
     }
     Object.defineProperty(Service.prototype, "taskDefinitionName", {
         get: function () {
-            return this.service.name + "TaskDefinition";
+            return this.name + "TaskDefinition";
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Service.prototype, "logGroupName", {
         get: function () {
-            return this.service.name + "CloudwatchLogGroup";
+            return this.name + "CloudwatchLogGroup";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Service.prototype, "name", {
+        get: function () {
+            return _.camelCase(this.opts.name);
         },
         enumerable: true,
         configurable: true
     });
     Service.prototype.generateResources = function () {
-        var resources = this.elb.generateResources();
-        console.log(resources);
-        resources[this.service.name] = {
+        var resources = {};
+        resources[this.name] = {
             'Type': 'AWS::ECS::Service',
             'Properties': {
-                'Cluster': this.service.clusterId,
-                'DesiredCount': this.service.count || 1,
-                'LoadBalancers': this.loadBalancers(),
+                'Cluster': this.opts.clusterId,
+                'DesiredCount': this.opts.count || 1,
+                'LoadBalancers': [
+                    this.listener.mapping()
+                ],
                 'Role': {
-                    'Ref': this.elb.name
+                    'Ref': 'ContainerlessELBRole'
                 },
                 'TaskDefinition': {
                     'Ref': this.taskDefinitionName
@@ -92,14 +85,14 @@ var Service = (function () {
                 'Family': {
                     'Fn::Sub': '${AWS::StackName}-task'
                 },
-                'ContainerDefinitions': this.definitions()
+                'ContainerDefinitions': [this.definition()]
             }
         };
         resources[this.logGroupName] = {
             'Type': 'AWS::Logs::LogGroup',
             'Properties': {
                 'LogGroupName': {
-                    'Fn::Sub': this.service.name + "-${AWS::StackName}"
+                    'Fn::Sub': this.name + "-${AWS::StackName}"
                 },
                 'RetentionInDays': 7
             }
