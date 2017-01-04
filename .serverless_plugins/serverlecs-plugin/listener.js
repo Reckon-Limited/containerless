@@ -1,10 +1,11 @@
 "use strict";
 var Listener = (function () {
-    function Listener(name, vpcId, port, path) {
+    function Listener(name, opts) {
         this.name = name;
-        this.vpcId = vpcId;
-        this.port = port;
-        this.path = path;
+        this.vpcId = opts.load_balancer.vpcId;
+        this.port = opts.port;
+        this.pathPattern = opts.urlPath;
+        this.priority = opts.priority;
     }
     Object.defineProperty(Listener.prototype, "listenerRuleName", {
         get: function () {
@@ -24,6 +25,7 @@ var Listener = (function () {
         var resources = {};
         resources[this.listenerRuleName] = {
             'Type': 'AWS::ElasticLoadBalancingV2::ListenerRule',
+            "DependsOn": ["ContainerlessListener", this.targetGroupName],
             'Properties': {
                 'Actions': [
                     {
@@ -36,17 +38,17 @@ var Listener = (function () {
                 'Conditions': [
                     {
                         'Field': 'path-pattern',
-                        'Values': [this.path]
+                        'Values': [this.pathPattern]
                     }
                 ],
                 'ListenerArn': { 'Ref': 'ContainerlessListener' },
-                'Priority': 1
+                'Priority': this.priority
             }
         };
         resources[this.targetGroupName] = {
             'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-            'DependsOn': this.name,
             'Properties': {
+                'Name': this.targetGroupName,
                 'HealthCheckIntervalSeconds': 10,
                 'HealthCheckPath': '/',
                 'HealthCheckProtocol': 'HTTP',
@@ -61,13 +63,13 @@ var Listener = (function () {
         return resources;
     };
     Listener.prototype.mapping = function () {
-        return {
-            'ContainerName': this.name,
-            'ContainerPort': this.port,
-            'TargetGroupArn': {
-                'Ref': this.targetGroupName
-            }
-        };
+        return [{
+                'ContainerName': this.name,
+                'ContainerPort': this.port,
+                'TargetGroupArn': {
+                    'Ref': this.targetGroupName
+                }
+            }];
     };
     return Listener;
 }());

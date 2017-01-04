@@ -4,13 +4,15 @@ export class Listener {
   name: string
   vpcId: string
   port: number
-  path: string
+  pathPattern: string
+  priority: number
 
-  constructor(name: string, vpcId: string, port: number, path: string) {
+  constructor(name: string, opts:any) {
     this.name = name;
-    this.vpcId = vpcId;
-    this.port = port;
-    this.path = path;
+    this.vpcId = opts.load_balancer.vpcId;
+    this.port = opts.port;
+    this.pathPattern = opts.urlPath;
+    this.priority = opts.priority;
   }
 
   get listenerRuleName() {
@@ -26,6 +28,7 @@ export class Listener {
 
     resources[this.listenerRuleName] = {
       'Type' : 'AWS::ElasticLoadBalancingV2::ListenerRule',
+      "DependsOn": ["ContainerlessListener", this.targetGroupName],
       'Properties' : {
         'Actions' : [
           {
@@ -38,18 +41,18 @@ export class Listener {
         'Conditions' : [
           {
             'Field' : 'path-pattern',
-            'Values' : [ this.path ]
+            'Values' : [ this.pathPattern ]
           }
         ],
         'ListenerArn' : {'Ref': 'ContainerlessListener'},
-        'Priority' : 1
+        'Priority' : this.priority
       }
     }
 
     resources[this.targetGroupName] = {
       'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-      'DependsOn': this.name,
       'Properties': {
+        'Name': this.targetGroupName,
         'HealthCheckIntervalSeconds': 10,
         'HealthCheckPath': '/',
         'HealthCheckProtocol': 'HTTP',
@@ -66,13 +69,13 @@ export class Listener {
   }
 
   mapping() {
-    return {
+    return [{
       'ContainerName': this.name,
       'ContainerPort': this.port,
       'TargetGroupArn': {
         'Ref': this.targetGroupName
       }
-    };
+    }];
 
   }
 

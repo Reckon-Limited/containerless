@@ -27,7 +27,6 @@ var ServiceTest = (function () {
     ServiceTest.prototype.before = function () {
         var service = new service_1.Service(opts);
         this.resources = service.generateResources();
-        console.log(this.resources);
     };
     ServiceTest.prototype.assert_service_resource = function () {
         var result = _.get(this.resources, 'blah.Type');

@@ -1,17 +1,18 @@
 declare class ServerlecsPlugin {
     private serverless;
-    private service;
     private applications;
     private options;
     private commands;
     private hooks;
+    service: any;
     provider: String;
     constructor(serverless: any, options: any);
     compile: () => void;
     build: () => void;
     prepare: () => any[];
+    prepareApplication: (name: string, opts: any) => any;
     dockerBuildAndPush(container: {
-        tag: string;
+        image: string;
         path: string;
     }): void;
     dockerPush(tag: string): void;

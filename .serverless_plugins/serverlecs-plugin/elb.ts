@@ -63,7 +63,7 @@ export class ELB {
 
     resources[this.listenerName] = {
       'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-      'DependsOn': this.roleName,
+      "DependsOn": this.name,
       'Properties': {
         'DefaultActions': [
           {
@@ -140,63 +140,63 @@ export class ELB {
     }
   }
 
-  get securityGroupName() {
-    return `ContainerlessSecurityGroup`;
-  }
-
-  securityGroup(): any {
-    let resources: any = {}
-
-    resources[this.securityGroupName] = {
-       'Type': 'AWS::EC2::SecurityGroup',
-       'Properties': {
-         'VpcId': {
-           'Ref': this.opts.vpcId
-         }
-       }
-    }
-
-    resources['DynamicPorts'] = {
-      'Type': 'AWS::EC2::SecurityGroupIngress',
-      'Properties': {
-         'GroupId': {
-           'Ref': this.securityGroupName
-         },
-         'IpProtocol': 'tcp',
-         'FromPort': 31000,
-         'ToPort': 61000,
-         'SourceSecurityGroupId': {
-          //  'Ref': this.securityGroupId
-         }
-      }
-    }
-
-    resources['HTTP'] = {
-      'Type': 'AWS::EC2::SecurityGroupIngress',
-      'Properties': {
-        'GroupId': {
-          'Ref': this.securityGroupName
-        },
-        'IpProtocol': 'tcp',
-        'FromPort': '80',
-        'ToPort': '80',
-        'CidrIp': '0.0.0.0/0'
-      }
-    }
-
-    resources['HTTPS'] = {
-      'Type': 'AWS::EC2::SecurityGroupIngress',
-      'Properties': {
-        'GroupId': {
-          'Ref': this.securityGroupName
-        },
-        'IpProtocol': 'tcp',
-        'FromPort': '443',
-        'ToPort': '443',
-        'CidrIp': '0.0.0.0/0'
-      }
-    }
-
-    return resources;
-  }
 }
+  // get securityGroupName() {
+  //   return `ContainerlessSecurityGroup`;
+  // }
+  //
+  // securityGroup(): any {
+  //   let resources: any = {}
+  //
+  //   resources[this.securityGroupName] = {
+  //      'Type': 'AWS::EC2::SecurityGroup',
+  //      'Properties': {
+  //        'VpcId': {
+  //          'Ref': this.opts.vpcId
+  //        }
+  //      }
+  //   }
+  //
+  //   resources['DynamicPorts'] = {
+  //     'Type': 'AWS::EC2::SecurityGroupIngress',
+  //     'Properties': {
+  //        'GroupId': {
+  //          'Ref': this.securityGroupName
+  //        },
+  //        'IpProtocol': 'tcp',
+  //        'FromPort': 31000,
+  //        'ToPort': 61000,
+  //        'SourceSecurityGroupId': {
+  //         //  'Ref': this.securityGroupId
+  //        }
+  //     }
+  //   }
+  //
+  //   resources['HTTP'] = {
+  //     'Type': 'AWS::EC2::SecurityGroupIngress',
+  //     'Properties': {
+  //       'GroupId': {
+  //         'Ref': this.securityGroupName
+  //       },
+  //       'IpProtocol': 'tcp',
+  //       'FromPort': '80',
+  //       'ToPort': '80',
+  //       'CidrIp': '0.0.0.0/0'
+  //     }
+  //   }
+  //
+  //   resources['HTTPS'] = {
+  //     'Type': 'AWS::EC2::SecurityGroupIngress',
+  //     'Properties': {
+  //       'GroupId': {
+  //         'Ref': this.securityGroupName
+  //       },
+  //       'IpProtocol': 'tcp',
+  //       'FromPort': '443',
+  //       'ToPort': '443',
+  //       'CidrIp': '0.0.0.0/0'
+  //     }
+  //   }
+  //
+  //   return resources;
+  // }

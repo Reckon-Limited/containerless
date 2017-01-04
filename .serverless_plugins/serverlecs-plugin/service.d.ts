@@ -6,6 +6,7 @@ export interface ServiceOpts {
     port: number;
     memory: number;
     image: string;
+    log_retention: number;
 }
 export declare class Service {
     opts: ServiceOpts;
@@ -15,15 +16,12 @@ export declare class Service {
     readonly taskDefinitionName: string;
     readonly logGroupName: string;
     readonly name: string;
-    generateResources(): any;
+    generateResources(): {};
     definition: () => {
         'Name': string;
         'Essential': string;
         'Image': string;
         'Memory': number;
-        'PortMappings': {
-            'ContainerPort': number;
-        }[];
         'LogConfiguration': {
             'LogDriver': string;
             'Options': {
@@ -38,5 +36,5 @@ export declare class Service {
                 };
             };
         };
-    };
+    }[];
 }

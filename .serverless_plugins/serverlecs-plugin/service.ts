@@ -9,6 +9,7 @@ export interface ServiceOpts {
   port:       number
   memory:     number
   image:      string
+  log_retention: number
 }
 
 export class Service {
@@ -19,14 +20,20 @@ export class Service {
   constructor(opts: any) {
     this.opts = opts;
 
-    this.listener = new Listener(this.name, opts.load_balancer.vpcId, opts.port, opts.path)
+    if (opts.urlPath) {
+      this.listener = new Listener(this.name, opts)
+    }
 
     if (!this.opts.clusterId) {
       throw new TypeError('Service must define a Cluster Id');
     }
 
-    if (!this.opts.port) {
-      throw new TypeError('Application must define a Port');
+    if (opts.port && !this.opts.urlPath) {
+      throw new TypeError('Application must define a URL Path when mapping a port');
+    }
+
+    if (opts.urlPath && !this.opts.port) {
+      throw new TypeError('Application must define a Port when mapping a URL Path');
     }
   }
 
@@ -42,24 +49,28 @@ export class Service {
   }
 
   generateResources() {
-    let resources: any = {};
 
-    resources[this.name] = {
+    let resources = {}
+
+    let service = {
       'Type': 'AWS::ECS::Service',
+      'DependsOn': ["ContainerlessListener", "ContainerlessELBRole", this.taskDefinitionName],
       'Properties': {
         'Cluster': this.opts.clusterId,
         'DesiredCount': this.opts.count || 1,
-        'LoadBalancers': [
-          this.listener.mapping()
-        ],
-        'Role': {
-          'Ref': 'ContainerlessELBRole'
-        },
         'TaskDefinition': {
           'Ref': this.taskDefinitionName
         }
       }
     }
+
+    if (this.listener) {
+      _.merge(resources,this.listener.generateResources());
+      _.set(service, 'Properties.LoadBalancers', this.listener.mapping());
+      _.set(service, 'Properties.Role', {'Ref': 'ContainerlessELBRole'});
+    }
+
+    resources[this.name] = service;
 
     resources[this.taskDefinitionName] = {
       'Type': 'AWS::ECS::TaskDefinition',
@@ -67,7 +78,7 @@ export class Service {
         'Family': {
           'Fn::Sub': '${AWS::StackName}-task'
         },
-        'ContainerDefinitions': [this.definition()]
+        'ContainerDefinitions': this.definition()
       }
     }
 
@@ -77,7 +88,7 @@ export class Service {
         'LogGroupName': {
           'Fn::Sub': `${this.name}-\${AWS::StackName}`
         },
-        'RetentionInDays': 7
+        'RetentionInDays': this.opts.log_retention
       }
     }
 
@@ -85,16 +96,12 @@ export class Service {
   }
 
   definition = () => {
-    return {
+
+    let definition = {
       'Name':this.name,
       'Essential': 'true',
       'Image': this.opts.image,
       'Memory': this.opts.memory || 128,
-      'PortMappings': [
-        {
-          'ContainerPort': this.opts.port
-        }
-      ],
       'LogConfiguration': {
         'LogDriver': 'awslogs',
         'Options': {
@@ -110,6 +117,12 @@ export class Service {
         }
       }
     }
+
+    if (this.opts.port) {
+     definition['PortMappings'] = [{ 'ContainerPort': this.opts.port }]
+    }
+
+    return [definition]
   }
 
 }

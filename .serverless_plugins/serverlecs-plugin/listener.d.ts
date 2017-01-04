@@ -2,8 +2,9 @@ export declare class Listener {
     name: string;
     vpcId: string;
     port: number;
-    path: string;
-    constructor(name: string, vpcId: string, port: number, path: string);
+    pathPattern: string;
+    priority: number;
+    constructor(name: string, opts: any);
     readonly listenerRuleName: string;
     readonly targetGroupName: string;
     generateResources(): any;
@@ -13,5 +14,5 @@ export declare class Listener {
         'TargetGroupArn': {
             'Ref': string;
         };
-    };
+    }[];
 }

@@ -27,7 +27,6 @@ class ServiceTest {
   before() {
     let service = new Service(opts);
     this.resources = service.generateResources();
-    console.log(this.resources)
   }
 
   @test('Service Resource')

@@ -1,8 +1,11 @@
 var express = require('express')
-var app = express()
-var handler = require('./handler');
+var app = express();
 
 app.get('/', function (req, res) {
+  res.send('Hello 2')
+})
+
+app.get('/hello', function (req, res) {
   res.send('Hello 2')
 })
 

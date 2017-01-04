@@ -4,6 +4,8 @@ import _ = require('lodash');
 
 const execSync = require('child_process').execSync;
 
+
+import { Cluster } from './cluster';
 import { Service } from './service';
 import { ELB } from './elb';
 
@@ -26,16 +28,25 @@ interface Serverless {
   config: any
 }
 
-// this._serverless.service.provider.compiledCloudFormationTemplate.Resources[permRef] = permission;
+const serviceDefaults = {
+  log_retention: 7
+}
+
+const clusterDefaults = {
+  capacity: 1,
+  max_size: 1,
+  instance_type: 't2.micro'
+}
 
 class ServerlecsPlugin {
   private serverless: any;
-  private service: any
   private applications: Array<any>
 
   private options: any;
   private commands: Commands;
   private hooks: Hooks;
+
+  service: any
 
   provider: String
 
@@ -66,6 +77,34 @@ class ServerlecsPlugin {
 
     let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
 
+    if (!this.service.clusterId) {
+      this.service.clusterId = {
+        "Ref": "ContainerlessCluster"
+      }
+
+      this.service.load_balancer.security_group = "ContainerlessSecurityGroup"
+      this.service.load_balancer.subnets = this.service.subnets
+      this.service.subnets = this.service.subnets.join()
+
+      _.merge({},clusterDefaults, this.service.cluster);
+      
+      let cluster = new Cluster(this.service.cluster);
+      _.merge(resources, cluster.generateResources());
+
+// capacity: number
+// max_size: number
+// vpcId: string
+// instance_type: string
+// vpcId:
+//   Fn::ImportValue: triple-az-vpc-VpcID
+// security_group:
+//   Fn::ImportValue: vtha-SecurityGroup
+// subnets:
+//   - Fn::ImportValue: triple-az-vpc-PublicSubnetAz1
+//   - Fn::ImportValue: triple-az-vpc-PublicSubnetAz2
+//   - Fn::ImportValue: triple-az-vpc-PublicSubnetAz3
+    }
+
     let elb = new ELB(this.service.load_balancer);
 
     _.merge(resources, elb.generateResources());
@@ -86,29 +125,40 @@ class ServerlecsPlugin {
   }
 
   prepare = () => {
+    let tag = this.serverless.processedInput.options.tag;
+    if (!tag) {
+      tag = Math.floor(Date.now() / 1000);
+    }
+    this.service.tag = tag;
+    this.serverless.cli.log(`Preparing containerless service with tag ${tag}`);
+    let applications = _.map(this.service.applications, (opts:any, name: string) => {
+      return this.prepareApplication(name, opts);
+    });
 
-      let tag = this.serverless.processedInput.options.tag;
-      if (!tag) {
-        tag = Math.floor(Date.now() / 1000);
+    let priority = 1;
+    _.each(applications, (app:any) => {
+      if (!app.priority) {
+        app.priority = priority
+        priority++
       }
-
-      this.serverless.cli.log(`Preparing containerless service with tag ${tag}`);
-      return _.map(this.service.applications, (app:any, appName: string) => {
-        let obj = {
-          name: appName,
-          clusterId: this.service.clusterId,
-          load_balancer: this.service.load_balancer,
-          path: `${this.serverless.config.servicePath}/${app.srcPath}`,
-          image: `${this.service.repository}:-${appName}-${tag}`
-        }
-        return _.merge(app, obj);
-      });
-
+    });
+    return applications;
   }
 
-  dockerBuildAndPush(container: {tag: string, path: string}) {
-    this.dockerBuild(container.path, container.tag);
-    this.dockerPush(container.tag);
+  prepareApplication = (name:string, opts:any) => {
+    let o = {
+      name: name,
+      clusterId: this.service.clusterId,
+      path: `${this.serverless.config.servicePath}/${opts.srcPath}`,
+      image: `${this.service.repository}:${name}-${this.service.tag}`,
+      load_balancer: _.merge({}, this.service.load_balancer, opts.load_balancer)
+    }
+    return _.merge(opts, o);
+  }
+
+  dockerBuildAndPush(container: {image: string, path: string}) {
+    this.dockerBuild(container.path, container.image);
+    this.dockerPush(container.image);
   }
 
   dockerPush(tag: string) {
@@ -140,7 +190,7 @@ class ServerlecsPlugin {
 
   getService() {
     if (this.hasService) {
-      return this.serverless.service.custom.containerless;
+      return _.merge({}, serviceDefaults, this.serverless.service.custom.containerless);
     }
   }
 

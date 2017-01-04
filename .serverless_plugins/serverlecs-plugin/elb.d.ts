@@ -12,6 +12,4 @@ export declare class ELB {
     readonly targetGroupName: string;
     generateResources(): any;
     rolePolicy(): any;
-    readonly securityGroupName: string;
-    securityGroup(): any;
 }
