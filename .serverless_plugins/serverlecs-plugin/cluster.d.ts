@@ -1,149 +1,176 @@
-export declare class Cluster {
-    amiIds: {
-        "ap-northeast-1": string;
-        "ap-southeast-1": string;
-        "ap-southeast-2": string;
-        "ca-central-1": string;
-        "eu-central-1": string;
-        "eu-west-1": string;
-        "eu-west-2": string;
-        "us-east-1": string;
-        "us-east-2": string;
-        "us-west-1": string;
-        "us-west-2": string;
-    };
-    capacity: number;
-    max_size: number;
+import { Resource } from './resource';
+export declare class Cluster implements Resource {
+    amiIds: any;
+    subnets: string;
     vpcId: string;
-    instance_type: string;
-    opts: any;
+    private _id;
+    private _securityGroup;
+    private capacity;
+    private instance_type;
+    private region;
+    private size;
     constructor(opts: any);
+    requireVpcId(): void;
+    requireSubnets(): void;
+    requireSecurityGroup(): void;
     ami(): any;
-    generateResources(): {
-        "AutoScalingGroup": {
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": string;
+    readonly id: string | {
+        'Ref': string;
+    };
+    readonly securityGroup: string | {
+        'Ref': string;
+    };
+    readonly elbRole: {
+        'Ref': string;
+    };
+    resources(): {} | {
+        'AutoScalingGroup': {
+            'CreationPolicy': {
+                'ResourceSignal': {
+                    'Timeout': string;
                 };
             };
-            "Properties": {
-                "DesiredCapacity": number;
-                "LaunchConfigurationName": {
-                    "Ref": string;
+            'Properties': {
+                'DesiredCapacity': number;
+                'LaunchConfigurationName': {
+                    'Ref': string;
                 };
-                "MaxSize": number;
-                "MinSize": string;
-                "VPCZoneIdentifier": any;
+                'MaxSize': number;
+                'MinSize': string;
+                'VPCZoneIdentifier': string;
             };
         };
-        "ContainerlessInstanceProfile": {
-            "Type": string;
-            "Properties": {
-                "Path": string;
-                "Roles": {
-                    "Ref": string;
+        'ContainerlessInstanceProfile': {
+            'Type': string;
+            'Properties': {
+                'Path': string;
+                'Roles': {
+                    'Ref': string;
                 }[];
             };
         };
-        "ContainerlessCluster": {
-            "Type": string;
-            "Properties": {
-                "Name": string;
+        'ContainerlessCluster': {
+            'Type': string;
+            'Properties': {
+                'Name': string;
             };
         };
-        "ContainerlessLaunchConfiguration": {
-            "Type": string;
-            "DependsOn": string[];
-            "Properties": {
-                "AssociatePublicIpAddress": boolean;
-                "IamInstanceProfile": {
-                    "Ref": string;
+        'ContainerlessLaunchConfiguration': {
+            'Type': string;
+            'DependsOn': string[];
+            'Properties': {
+                'AssociatePublicIpAddress': boolean;
+                'IamInstanceProfile': {
+                    'Ref': string;
                 };
-                "ImageId": any;
-                "InstanceType": {
-                    "Ref": string;
+                'ImageId': any;
+                'InstanceType': {
+                    'Ref': string;
                 };
-                "KeyName": string;
-                "SecurityGroups": {
-                    "Ref": string;
+                'KeyName': string;
+                'SecurityGroups': {
+                    'Ref': string;
                 }[];
-                "UserData": {
-                    "Fn::Base64": {
-                        "Fn::Sub": string;
+                'UserData': {
+                    'Fn::Base64': {
+                        'Fn::Sub': string;
                     };
                 };
             };
         };
-        "ContainerlessInstanceRole": {
-            "Type": string;
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Statement": {
-                        "Action": string[];
-                        "Effect": string;
-                        "Principal": {
-                            "Service": string[];
+        'ContainerlessInstanceRole': {
+            'Type': string;
+            'Properties': {
+                'AssumeRolePolicyDocument': {
+                    'Statement': {
+                        'Action': string[];
+                        'Effect': string;
+                        'Principal': {
+                            'Service': string[];
                         };
                     }[];
                 };
-                "Path": string;
-                "Policies": {
-                    "PolicyDocument": {
-                        "Statement": {
-                            "Action": string[];
-                            "Effect": string;
-                            "Resource": string;
+                'Path': string;
+                'Policies': {
+                    'PolicyDocument': {
+                        'Statement': {
+                            'Action': string[];
+                            'Effect': string;
+                            'Resource': string;
                         }[];
                     };
-                    "PolicyName": string;
+                    'PolicyName': string;
                 }[];
             };
         };
-        "ContainerlessSecurityGroup": {
-            "Properties": {
-                "GroupDescription": string;
-                "VpcId": {
-                    "Ref": string;
-                };
+        'ContainerlessSecurityGroup': {
+            'Properties': {
+                'GroupDescription': string;
+                'VpcId': string;
             };
-            "Type": string;
+            'Type': string;
         };
-        "ContainerlessSecurityGroupDynamicPorts": {
-            "Type": string;
-            "Properties": {
-                "FromPort": number;
-                "GroupId": {
-                    "Ref": string;
+        'ContainerlessSecurityGroupDynamicPorts': {
+            'Type': string;
+            'Properties': {
+                'FromPort': number;
+                'GroupId': {
+                    'Ref': string;
                 };
-                "IpProtocol": string;
-                "SourceSecurityGroupId": {
-                    "Ref": string;
+                'IpProtocol': string;
+                'SourceSecurityGroupId': {
+                    'Ref': string;
                 };
-                "ToPort": number;
+                'ToPort': number;
             };
         };
-        "ContainerlessSecurityGroupHTTP": {
-            "Type": string;
-            "Properties": {
-                "CidrIp": string;
-                "FromPort": string;
-                "GroupId": {
-                    "Ref": string;
+        'ContainerlessSecurityGroupHTTP': {
+            'Type': string;
+            'Properties': {
+                'CidrIp': string;
+                'FromPort': string;
+                'GroupId': {
+                    'Ref': string;
                 };
-                "IpProtocol": string;
-                "ToPort": string;
+                'IpProtocol': string;
+                'ToPort': string;
             };
         };
-        "ContainerlessSecurityGroupHTTPS": {
-            "Type": string;
-            "Properties": {
-                "CidrIp": string;
-                "FromPort": string;
-                "GroupId": {
-                    "Ref": string;
+        'ContainerlessSecurityGroupHTTPS': {
+            'Type': string;
+            'Properties': {
+                'CidrIp': string;
+                'FromPort': string;
+                'GroupId': {
+                    'Ref': string;
                 };
-                "IpProtocol": string;
-                "ToPort": string;
+                'IpProtocol': string;
+                'ToPort': string;
+            };
+        };
+        'ContainerlessELBRole': {
+            'Type': string;
+            'Properties': {
+                'AssumeRolePolicyDocument': {
+                    'Statement': {
+                        'Effect': string;
+                        'Principal': {
+                            'Service': string[];
+                        };
+                        'Action': string[];
+                    }[];
+                };
+                'Path': string;
+                'Policies': {
+                    'PolicyName': string;
+                    'PolicyDocument': {
+                        'Statement': {
+                            'Effect': string;
+                            'Resource': string;
+                            'Action': string[];
+                        }[];
+                    };
+                }[];
             };
         };
     };
