@@ -15,14 +15,17 @@ plugins:
 custom:
   containerless:
     cluster:
-      instance_type: t2.small
+      vpcId:
+        Fn::ImportValue: triple-az-vpc-VpcID
+      # instance_type: t2.small
+      # security_group:
+      #   Fn::ImportValue: vtha-SecurityGroup
       subnets:
         - subnet-12359e64
         - subnet-b442c0d0
         - subnet-a2b967fb
+
     repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
-    vpcId:
-      Fn::ImportValue: triple-az-vpc-VpcID
     # clusterId: arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N
     # load_balancer:
     #   security_group:
@@ -33,17 +36,17 @@ custom:
     #     - Fn::ImportValue: triple-az-vpc-PublicSubnetAz3
     applications:
       hello-1:
-        srcPath: src-1
-        urlPath: /
+        src: src-1
+        url: /
         port: 3000
         memory: 128
       hello-2:
-        srcPath: src-2
-        urlPath: /hello
+        src: src-2
+        url: /hello
         port: 3000
         memory: 128
       hello-3:
-        srcPath: src-2
+        src: src-2
         memory: 128
       # hello-2:
       #   srcPath: src-2
