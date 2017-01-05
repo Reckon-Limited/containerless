@@ -2,43 +2,53 @@ import { suite, test, slow, timeout, skip, only } from "mocha-typescript";
 
 import { expect } from 'chai';
 
-import { ELB, ELBOpts } from '../elb'
+import { Cluster } from '../cluster'
+import { ELB } from '../elb'
 
 import * as _ from 'lodash';
 
-const opts = {
-    vpcId:          'blah:vtha',
-    subnets:        ['subnet-a'],
-    security_group: 'vtha'
-}
+declare function describe(desc: string, cb: Function):any
 
-// repository: 'blah/vtha',
-// cluster:    'arn:blah:vtha',
-// containers: [
-//   {name: 'Container'}
-// ]
+describe('with an existing cluster', () => {
+  @suite class ELBTest {
+    opts = {
+      id: 'arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N',
+      security_group: 'sg-abcdef',
+      vpcId: 'vpc-1',
+      subnets: [
+        'subnet-12359e64',
+        'subnet-b442c0d0',
+        'subnet-a2b967fb'
+      ]
+    }
 
-@suite
-class ServiceTest {
+    elb:ELB
+    resources:any
 
-  resources: any;
+    before() {
+      let cluster = new Cluster(this.opts);
+      this.elb = new ELB(cluster);
+      this.resources = this.elb.resources()
+    }
 
-  before() {
-    let elb = new ELB(opts);
-    this.resources = elb.generateResources();
-    console.log(this.resources)
+    @test elb_resource(){
+      let result = _.get(this.resources, 'ContainerlessELB.Type');
+      expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer')
+    }
+
+    @test elb_resource_security_group(){
+      let result = _.get(this.resources, 'ContainerlessELB.Properties.SecurityGroups');
+      expect(result).to.eql([this.opts.security_group])
+    }
+
+    @test elb_resource_subnets(){
+      let result = _.get(this.resources, 'ContainerlessELB.Properties.Subnets');
+      expect(result).to.eql(this.opts.subnets)
+    }
+    
+    @test elb_resource_vpcId() {
+      let result = _.get(this.resources, 'ContainerlessDefaultTargetGroup.Properties.VpcId');
+      expect(result).to.eql(this.opts.vpcId)
+    }
   }
-
-  @test('Generates an ELB Resource')
-  assert_elb_resource() {
-    let result = _.get(this.resources, 'ContainerlessELB.Type');
-    expect(result).to.eq('AWS::ElasticLoadBalancingV2::LoadBalancer')
-  }
-
-  @test('Generates an ELB Target with correct VPCId')
-  assert_elb_vpcid() {
-    let result = _.get(this.resources, 'ContainerlessDefaultTargetGroup.Properties.VpcId');
-    expect(result).to.eq('blah:vtha');
-  }
-
-}
+});

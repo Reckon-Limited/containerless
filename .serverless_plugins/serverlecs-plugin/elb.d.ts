@@ -1,15 +1,48 @@
-export interface ELBOpts {
-    vpcId: string;
-    subnets: Array<string>;
-    security_group: string;
-}
-export declare class ELB {
-    opts: ELBOpts;
-    constructor(opts: any);
-    readonly name: string;
-    readonly roleName: string;
-    readonly listenerName: string;
-    readonly targetGroupName: string;
-    generateResources(): any;
-    rolePolicy(): any;
+import { Cluster } from './cluster';
+import { Resource } from './resource';
+export declare class ELB implements Resource {
+    cluster: Cluster;
+    constructor(cluster: Cluster);
+    resources(): {
+        'ContainerlessELB': {
+            'Type': string;
+            'Properties': {
+                'Scheme': string;
+                'LoadBalancerAttributes': {
+                    'Key': string;
+                    'Value': number;
+                }[];
+                'Subnets': string;
+                'SecurityGroups': (string | {
+                    'Ref': string;
+                })[];
+            };
+        };
+        'ContainerlessListener': {
+            'Type': string;
+            "DependsOn": string;
+            'Properties': {
+                'DefaultActions': {
+                    'Type': string;
+                    'TargetGroupArn': {
+                        'Ref': string;
+                    };
+                }[];
+                'LoadBalancerArn': {
+                    'Ref': string;
+                };
+                'Port': string;
+                'Protocol': string;
+            };
+        };
+        'ContainerlessDefaultTargetGroup': {
+            'Type': string;
+            'DependsOn': string;
+            'Properties': {
+                'Port': number;
+                'Protocol': string;
+                'VpcId': string;
+            };
+        };
+    };
 }
