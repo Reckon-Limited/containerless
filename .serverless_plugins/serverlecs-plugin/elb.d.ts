@@ -3,7 +3,8 @@ import { Resource } from './resource';
 export declare class ELB implements Resource {
     cluster: Cluster;
     constructor(cluster: Cluster);
-    resources(): {
+    readonly name: string;
+    generate(): {
         'ContainerlessELB': {
             'Type': string;
             'Properties': {

@@ -4,10 +4,11 @@ import _ = require('lodash');
 
 const execSync = require('child_process').execSync;
 
+import { prepare } from './factory'
 
-import { Cluster } from './cluster';
-import { Service } from './service';
-import { ELB } from './elb';
+// import { Cluster } from './cluster';
+// import { Service } from './service';
+// import { ELB } from './elb';
 
 interface Command {
   usage: String
@@ -28,16 +29,6 @@ interface Serverless {
   config: any
 }
 
-const serviceDefaults = {
-  log_retention: 7
-}
-
-const clusterDefaults = {
-  capacity: 1,
-  max_size: 1,
-  instance_type: 't2.micro'
-}
-
 class ServerlecsPlugin {
   private serverless: any;
   private applications: Array<any>
@@ -46,7 +37,8 @@ class ServerlecsPlugin {
   private commands: Commands;
   private hooks: Hooks;
 
-  service: any
+  opts: any
+  tag: string
 
   provider: String
 
@@ -55,8 +47,8 @@ class ServerlecsPlugin {
     this.options = options;
     this.provider = 'aws';
 
-    this.service = this.getService();
-    this.applications = this.prepare();
+    this.tag = this.getTag();
+    this.opts = this.getOptions();
 
     this.commands = {
       "ecs-build": {
@@ -75,90 +67,31 @@ class ServerlecsPlugin {
 
   compile = () => {
 
-    let resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+    let Resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
 
-    if (!this.service.clusterId) {
-      this.service.clusterId = {
-        "Ref": "ContainerlessCluster"
-      }
+    let resources = prepare(this.tag, this.opts)
 
-      this.service.load_balancer.security_group = "ContainerlessSecurityGroup"
-      this.service.load_balancer.subnets = this.service.subnets
-      this.service.subnets = this.service.subnets.join()
-
-      _.merge({},clusterDefaults, this.service.cluster);
-      
-      let cluster = new Cluster(this.service.cluster);
-      _.merge(resources, cluster.generateResources());
-
-// capacity: number
-// max_size: number
-// vpcId: string
-// instance_type: string
-// vpcId:
-//   Fn::ImportValue: triple-az-vpc-VpcID
-// security_group:
-//   Fn::ImportValue: vtha-SecurityGroup
-// subnets:
-//   - Fn::ImportValue: triple-az-vpc-PublicSubnetAz1
-//   - Fn::ImportValue: triple-az-vpc-PublicSubnetAz2
-//   - Fn::ImportValue: triple-az-vpc-PublicSubnetAz3
-    }
-
-    let elb = new ELB(this.service.load_balancer);
-
-    _.merge(resources, elb.generateResources());
-
-    _.each(this.applications, (app) => {
-      this.serverless.cli.log(`Generating cfn resources for service ${app.name}`);
-      let service = new Service(app);
-      _.merge(resources, service.generateResources());
+    _.each(resources, (resource) => {
+      this.serverless.cli.log(`Building resources for ${resource.name}`);
+      _.merge(Resources, resource.generate());
     });
 
   }
 
   build = () => {
-    _.each(this.applications, (app, appName: string) => {
-      this.serverless.cli.log(`Building service ${appName}`);
-      this.dockerBuildAndPush(app);
-    });
-  }
-
-  prepare = () => {
-    let tag = this.serverless.processedInput.options.tag;
-    if (!tag) {
-      tag = Math.floor(Date.now() / 1000);
-    }
-    this.service.tag = tag;
-    this.serverless.cli.log(`Preparing containerless service with tag ${tag}`);
-    let applications = _.map(this.service.applications, (opts:any, name: string) => {
-      return this.prepareApplication(name, opts);
-    });
-
-    let priority = 1;
-    _.each(applications, (app:any) => {
-      if (!app.priority) {
-        app.priority = priority
-        priority++
+    _.each(this.options.applications, (app, name: string) => {
+      this.serverless.cli.log(`Building service ${name}`);
+      let opts = {
+        path: `${this.serverless.config.servicePath}/${app.src}`,
+        image: `${this.opts.repository}:${name}-${this.tag}`,
       }
+      this.dockerBuildAndPush(_.merge(opts,app));
     });
-    return applications;
   }
 
-  prepareApplication = (name:string, opts:any) => {
-    let o = {
-      name: name,
-      clusterId: this.service.clusterId,
-      path: `${this.serverless.config.servicePath}/${opts.srcPath}`,
-      image: `${this.service.repository}:${name}-${this.service.tag}`,
-      load_balancer: _.merge({}, this.service.load_balancer, opts.load_balancer)
-    }
-    return _.merge(opts, o);
-  }
-
-  dockerBuildAndPush(container: {image: string, path: string}) {
-    this.dockerBuild(container.path, container.image);
-    this.dockerPush(container.image);
+  dockerBuildAndPush(app: {image: string, path: string}) {
+    this.dockerBuild(app.path, app.image);
+    this.dockerPush(app.image);
   }
 
   dockerPush(tag: string) {
@@ -188,15 +121,24 @@ class ServerlecsPlugin {
     this.serverless.cli.log(result);
   }
 
-  getService() {
-    if (this.hasService) {
-      return _.merge({}, serviceDefaults, this.serverless.service.custom.containerless);
+  getTag() {
+    if (this.serverless.processedInput.options.tag) {
+      return this.serverless.processedInput.options.tag
+    } else {
+      return Math.floor(Date.now() / 1000);
     }
   }
 
-  hasService() {
+  getOptions() {
+    if (this.hasOptions) {
+      return _.merge({}, this.serverless.service.custom.containerless);
+    }
+  }
+
+  hasOptions() {
     return this.serverless.service.custom && this.serverless.service.custom.containerless;
   }
+
 }
 
 export = ServerlecsPlugin;

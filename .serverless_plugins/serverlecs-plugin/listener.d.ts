@@ -6,10 +6,12 @@ export declare class Listener implements Resource {
     cluster: Cluster;
     priority: number;
     constructor(service: Service, cluster: Cluster);
+    calculatePriority(): number;
+    readonly name: string;
     readonly listenerRuleName: string;
     readonly targetGroupName: string;
     required(): number | "";
-    resources(): any;
+    generate(): any;
     readonly mapping: {
         'ContainerName': string;
         'ContainerPort': number;
@@ -18,3 +20,4 @@ export declare class Listener implements Resource {
         };
     }[];
 }
+export declare function reset(): void;

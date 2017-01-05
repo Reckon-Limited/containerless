@@ -32,7 +32,7 @@ var Service = (function () {
         };
         this.cluster = cluster;
         this._name = opts.name;
-        this.tag = opts.tag || this.requireRepository();
+        this.tag = opts.tag || this.requireTag();
         this.repository = opts.repository || this.requireRepository();
         this.count = opts.count || 1;
         this.memory = opts.memory || 128;
@@ -44,8 +44,6 @@ var Service = (function () {
         if (this.url && !this.port)
             this.requirePort();
         this.listener = new listener_1.Listener(this, cluster);
-        // this.servicePath = `${opts.path}/${opts.src}`
-        // path: `${this.serverless.config.servicePath}/${opts.src}`,
     }
     Service.prototype.requirePort = function () {
         throw new TypeError('Service definition requires a Port when mapping a URL');
@@ -61,7 +59,7 @@ var Service = (function () {
     };
     Object.defineProperty(Service.prototype, "image", {
         get: function () {
-            return this.repository + ":" + this.name + "-" + this.tag;
+            return this.repository + ":" + this._name + "-" + this.tag;
         },
         enumerable: true,
         configurable: true
@@ -87,21 +85,23 @@ var Service = (function () {
         enumerable: true,
         configurable: true
     });
-    Service.prototype.resources = function () {
-        var resources = this.listener.resources();
+    Service.prototype.generate = function () {
+        var resources = this.listener.generate();
         resources[this.name] = {
             'Type': 'AWS::ECS::Service',
-            'DependsOn': ["ContainerlessListener", "ContainerlessELBRole", this.taskDefinitionName],
+            'DependsOn': ["ContainerlessListener", this.taskDefinitionName],
             'Properties': {
                 'Cluster': this.cluster.id,
                 'DesiredCount': this.count,
                 'TaskDefinition': {
                     'Ref': this.taskDefinitionName
                 },
-                'LoadBalancers': this.listener.mapping,
-                'Role': this.cluster.elbRole
+                'LoadBalancers': this.listener.mapping
             }
         };
+        if (this.listener.required()) {
+            resources[this.name]['Properties']['Role'] = this.cluster.elbRole;
+        }
         resources[this.taskDefinitionName] = {
             'Type': 'AWS::ECS::TaskDefinition',
             'Properties': {

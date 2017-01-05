@@ -22,7 +22,7 @@ describe('with existing cluster', () => {
     }
 
     cluster:Cluster
-    
+
     before() {
       this.cluster = new Cluster(this.opts);
     }
@@ -32,7 +32,7 @@ describe('with existing cluster', () => {
     }
 
     @test resources_empty(){
-      expect(this.cluster.resources()).to.be.empty
+      expect(this.cluster.generate()).to.be.empty
     }
 
   }
@@ -59,7 +59,7 @@ describe('create a new cluster', () => {
     }
 
     @test resources_not_empty(){
-      expect(this.cluster.resources()).to.not.be.empty
+      expect(this.cluster.generate()).to.not.be.empty
     }
 
   }

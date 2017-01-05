@@ -4,6 +4,9 @@ import { Cluster } from './cluster'
 import { Resource } from './resource'
 import { Service } from './Service'
 
+// this is a terrible idea
+let priority = 0;
+
 export class Listener implements Resource {
 
   service: Service
@@ -13,6 +16,15 @@ export class Listener implements Resource {
   constructor(service: Service, cluster: Cluster) {
     this.service = service;
     this.cluster = cluster;
+    this.priority = this.calculatePriority();
+  }
+
+  calculatePriority() {
+    return priority = priority + 1;
+  }
+
+  get name() {
+    return `${this.service.name}Listener`;
   }
 
   get listenerRuleName() {
@@ -27,7 +39,7 @@ export class Listener implements Resource {
     return (this.service.url && this.service.port);
   }
 
-  resources() {
+  generate() {
     if (!this.required()) return {}
 
     let resources:any = {}
@@ -88,4 +100,8 @@ export class Listener implements Resource {
   }
 
 
+}
+
+export function reset() {
+  priority = 0;
 }

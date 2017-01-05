@@ -18,7 +18,6 @@ export class Cluster implements Resource {
     'us-west-2': 'ami-a2ca61c2',
   }
 
-
   public subnets: string
   public vpcId: string
 
@@ -61,6 +60,10 @@ export class Cluster implements Resource {
     return this.amiIds[this.region];
   }
 
+  get name() {
+    return 'Cluster';
+  }
+
   get id() {
     if (this._id) {
       return this._id;
@@ -77,30 +80,36 @@ export class Cluster implements Resource {
     }
   }
 
-  get elbRole() {  
+  get elbRole() {
     return { 'Ref': 'ContainerlessELBRole'}
   }
 
-
-  resources() {
+  generate() {
     if (this._id) return {}
 
     return {
       'AutoScalingGroup': {
-          'CreationPolicy': {
-            'ResourceSignal': {
-              'Timeout': 'PT5M'
-            }
-          },
-          'Properties': {
-            'DesiredCapacity': this.capacity,
-            'LaunchConfigurationName': {
-              'Ref': 'ContainerlessLaunchConfiguration'
-            },
-            'MaxSize': this.size,
-            'MinSize': '1',
-            'VPCZoneIdentifier': this.subnets
+        'Type': 'AWS::AutoScaling::AutoScalingGroup',
+        'CreationPolicy': {
+          'ResourceSignal': {
+            'Timeout': 'PT5M'
           }
+        },
+        'UpdatePolicy': {
+          'AutoScalingReplacingUpdate': {
+            'PauseTime': 'PT5M',
+            'WillReplace': 'true'
+          }
+        },
+        'Properties': {
+          'DesiredCapacity': this.capacity,
+          'LaunchConfigurationName': {
+            'Ref': 'ContainerlessLaunchConfiguration'
+          },
+          'MaxSize': this.size,
+          'MinSize': '1',
+          'VPCZoneIdentifier': this.subnets
+        }
       },
       'ContainerlessInstanceProfile': {
         'Type': 'AWS::IAM::InstanceProfile',
@@ -113,9 +122,7 @@ export class Cluster implements Resource {
       },
       'ContainerlessCluster': {
         'Type': 'AWS::ECS::Cluster',
-        'Properties': {
-          'Name': 'ContainerlessCluster',
-        }
+        'DependsOn': 'ContainerlessELBRole'
       },
       'ContainerlessLaunchConfiguration': {
         'Type': 'AWS::AutoScaling::LaunchConfiguration',
@@ -126,9 +133,7 @@ export class Cluster implements Resource {
             'Ref': 'ContainerlessInstanceProfile'
           },
           'ImageId': this.ami(),
-          'InstanceType': {
-            'Ref': this.instance_type
-          },
+          'InstanceType': this.instance_type,
           'KeyName': 'ecs-instance',
           'SecurityGroups': [
             {
@@ -137,7 +142,7 @@ export class Cluster implements Resource {
           ],
           'UserData': {
             'Fn::Base64': {
-              'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n\n#!/bin/bash -xe\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n'
+              'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n\n#!/bin/bash -xe\necho ECS_CLUSTER=${ContainerlessCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n'
             }
           }
         }

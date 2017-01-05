@@ -29,7 +29,7 @@ describe('with existing cluster', function () {
             chai_1.expect(this.cluster.id).to.eq(this.opts.id);
         };
         ClusterTest.prototype.resources_empty = function () {
-            chai_1.expect(this.cluster.resources()).to.be.empty;
+            chai_1.expect(this.cluster.generate()).to.be.empty;
         };
         return ClusterTest;
     }());
@@ -62,7 +62,7 @@ describe('create a new cluster', function () {
             chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ContainerlessCluster' });
         };
         ClusterTest.prototype.resources_not_empty = function () {
-            chai_1.expect(this.cluster.resources()).to.not.be.empty;
+            chai_1.expect(this.cluster.generate()).to.not.be.empty;
         };
         return ClusterTest;
     }());

@@ -37,7 +37,7 @@ describe('with an existing cluster and a load balanced container', () => {
     before() {
       let cluster = new Cluster(this.cluster);
       this.service = new Service(cluster, this.opts);
-      this.resources = this.service.resources()
+      this.resources = this.service.generate()
     }
 
     @test service_name(){
@@ -71,7 +71,6 @@ describe('with an existing cluster and a load balanced container', () => {
   }
 });
 
-
 describe('new cluster and container without load balancer', () => {
   @suite class ServiceTest {
     cluster = {
@@ -95,7 +94,7 @@ describe('new cluster and container without load balancer', () => {
     before() {
       let cluster = new Cluster(this.cluster);
       this.service = new Service(cluster, this.opts);
-      this.resources = this.service.resources()
+      this.resources = this.service.generate()
     }
 
     @test service_name(){
@@ -105,6 +104,11 @@ describe('new cluster and container without load balancer', () => {
     @test service_load_balancers(){
       let result = _.get(this.resources, 'App1.Properties.LoadBalancers');
       expect(result).to.be.empty;
+    }
+
+    @test service_role_undefined(){
+      let result = _.get(this.resources, 'App1.Properties.Role');
+      expect(result).to.be.undefined;
     }
 
   }

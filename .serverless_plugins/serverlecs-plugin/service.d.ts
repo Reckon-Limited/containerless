@@ -20,6 +20,6 @@ export declare class Service implements Resource {
     readonly taskDefinitionName: string;
     readonly logGroupName: string;
     readonly name: string;
-    resources(): any;
+    generate(): any;
     definition: () => any[];
 }

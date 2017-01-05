@@ -40,6 +40,13 @@ var Cluster = (function () {
     Cluster.prototype.ami = function () {
         return this.amiIds[this.region];
     };
+    Object.defineProperty(Cluster.prototype, "name", {
+        get: function () {
+            return 'Cluster';
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Cluster.prototype, "id", {
         get: function () {
             if (this._id) {
@@ -71,14 +78,21 @@ var Cluster = (function () {
         enumerable: true,
         configurable: true
     });
-    Cluster.prototype.resources = function () {
+    Cluster.prototype.generate = function () {
         if (this._id)
             return {};
         return {
             'AutoScalingGroup': {
+                'Type': 'AWS::AutoScaling::AutoScalingGroup',
                 'CreationPolicy': {
                     'ResourceSignal': {
                         'Timeout': 'PT5M'
+                    }
+                },
+                'UpdatePolicy': {
+                    'AutoScalingReplacingUpdate': {
+                        'PauseTime': 'PT5M',
+                        'WillReplace': 'true'
                     }
                 },
                 'Properties': {
@@ -102,9 +116,7 @@ var Cluster = (function () {
             },
             'ContainerlessCluster': {
                 'Type': 'AWS::ECS::Cluster',
-                'Properties': {
-                    'Name': 'ContainerlessCluster',
-                }
+                'DependsOn': 'ContainerlessELBRole'
             },
             'ContainerlessLaunchConfiguration': {
                 'Type': 'AWS::AutoScaling::LaunchConfiguration',
@@ -115,9 +127,7 @@ var Cluster = (function () {
                         'Ref': 'ContainerlessInstanceProfile'
                     },
                     'ImageId': this.ami(),
-                    'InstanceType': {
-                        'Ref': this.instance_type
-                    },
+                    'InstanceType': this.instance_type,
                     'KeyName': 'ecs-instance',
                     'SecurityGroups': [
                         {
@@ -126,7 +136,7 @@ var Cluster = (function () {
                     ],
                     'UserData': {
                         'Fn::Base64': {
-                            'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n\n#!/bin/bash -xe\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n'
+                            'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n\n#!/bin/bash -xe\necho ECS_CLUSTER=${ContainerlessCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n'
                         }
                     }
                 }

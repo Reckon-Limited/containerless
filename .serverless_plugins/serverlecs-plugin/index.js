@@ -1,81 +1,33 @@
 "use strict";
 var _ = require("lodash");
 var execSync = require('child_process').execSync;
-var cluster_1 = require("./cluster");
-var service_1 = require("./service");
-var elb_1 = require("./elb");
-var serviceDefaults = {
-    log_retention: 7
-};
-var clusterDefaults = {
-    capacity: 1,
-    max_size: 1,
-    instance_type: 't2.micro'
-};
+var factory_1 = require("./factory");
 var ServerlecsPlugin = (function () {
     function ServerlecsPlugin(serverless, options) {
         var _this = this;
         this.compile = function () {
-            var resources = _this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
-            if (!_this.service.clusterId) {
-                _this.service.clusterId = {
-                    "Ref": "ContainerlessCluster"
-                };
-                _this.service.load_balancer.security_group = "ContainerlessSecurityGroup";
-                _this.service.load_balancer.subnets = _this.service.subnets;
-                _this.service.subnets = _this.service.subnets.join();
-                _.merge({}, clusterDefaults, _this.service.cluster);
-                var cluster = new cluster_1.Cluster(_this.service.cluster);
-                _.merge(resources, cluster.generateResources());
-            }
-            var elb = new elb_1.ELB(_this.service.load_balancer);
-            _.merge(resources, elb.generateResources());
-            _.each(_this.applications, function (app) {
-                _this.serverless.cli.log("Generating cfn resources for service " + app.name);
-                var service = new service_1.Service(app);
-                _.merge(resources, service.generateResources());
+            var Resources = _this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+            var resources = factory_1.prepare(_this.tag, _this.opts);
+            _.each(resources, function (resource) {
+                _this.serverless.cli.log("Building resources for " + resource.name);
+                _.merge(Resources, resource.generate());
             });
         };
         this.build = function () {
-            _.each(_this.applications, function (app, appName) {
-                _this.serverless.cli.log("Building service " + appName);
-                _this.dockerBuildAndPush(app);
+            _.each(_this.options.applications, function (app, name) {
+                _this.serverless.cli.log("Building service " + name);
+                var opts = {
+                    path: _this.serverless.config.servicePath + "/" + app.src,
+                    image: _this.opts.repository + ":" + name + "-" + _this.tag,
+                };
+                _this.dockerBuildAndPush(_.merge(opts, app));
             });
-        };
-        this.prepare = function () {
-            var tag = _this.serverless.processedInput.options.tag;
-            if (!tag) {
-                tag = Math.floor(Date.now() / 1000);
-            }
-            _this.service.tag = tag;
-            _this.serverless.cli.log("Preparing containerless service with tag " + tag);
-            var applications = _.map(_this.service.applications, function (opts, name) {
-                return _this.prepareApplication(name, opts);
-            });
-            var priority = 1;
-            _.each(applications, function (app) {
-                if (!app.priority) {
-                    app.priority = priority;
-                    priority++;
-                }
-            });
-            return applications;
-        };
-        this.prepareApplication = function (name, opts) {
-            var o = {
-                name: name,
-                clusterId: _this.service.clusterId,
-                path: _this.serverless.config.servicePath + "/" + opts.srcPath,
-                image: _this.service.repository + ":" + name + "-" + _this.service.tag,
-                load_balancer: _.merge({}, _this.service.load_balancer, opts.load_balancer)
-            };
-            return _.merge(opts, o);
         };
         this.serverless = serverless;
         this.options = options;
         this.provider = 'aws';
-        this.service = this.getService();
-        this.applications = this.prepare();
+        this.tag = this.getTag();
+        this.opts = this.getOptions();
         this.commands = {
             "ecs-build": {
                 usage: 'Build an ECS cluster',
@@ -89,9 +41,9 @@ var ServerlecsPlugin = (function () {
             'ecs-build:build': this.build,
         };
     }
-    ServerlecsPlugin.prototype.dockerBuildAndPush = function (container) {
-        this.dockerBuild(container.path, container.image);
-        this.dockerPush(container.image);
+    ServerlecsPlugin.prototype.dockerBuildAndPush = function (app) {
+        this.dockerBuild(app.path, app.image);
+        this.dockerPush(app.image);
     };
     ServerlecsPlugin.prototype.dockerPush = function (tag) {
         var command = "docker push " + tag;
@@ -113,12 +65,20 @@ var ServerlecsPlugin = (function () {
         var result = execSync(command);
         this.serverless.cli.log(result);
     };
-    ServerlecsPlugin.prototype.getService = function () {
-        if (this.hasService) {
-            return _.merge({}, serviceDefaults, this.serverless.service.custom.containerless);
+    ServerlecsPlugin.prototype.getTag = function () {
+        if (this.serverless.processedInput.options.tag) {
+            return this.serverless.processedInput.options.tag;
+        }
+        else {
+            return Math.floor(Date.now() / 1000);
         }
     };
-    ServerlecsPlugin.prototype.hasService = function () {
+    ServerlecsPlugin.prototype.getOptions = function () {
+        if (this.hasOptions) {
+            return _.merge({}, this.serverless.service.custom.containerless);
+        }
+    };
+    ServerlecsPlugin.prototype.hasOptions = function () {
         return this.serverless.service.custom && this.serverless.service.custom.containerless;
     };
     return ServerlecsPlugin;

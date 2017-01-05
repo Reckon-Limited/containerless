@@ -14,7 +14,7 @@ var _ = require("lodash");
 describe('service with port and url', function () {
     var ListenerTest = (function () {
         function ListenerTest() {
-            this.cluster = {
+            this.clusterOpts = {
                 vpcId: 'vpc-1',
                 subnets: [
                     'subnet-12359e64',
@@ -31,10 +31,11 @@ describe('service with port and url', function () {
             };
         }
         ListenerTest.prototype.before = function () {
-            var cluster = new cluster_1.Cluster(this.cluster);
-            var service = new service_1.Service(cluster, this.opts);
-            this.listener = new listener_1.Listener(service, cluster);
-            this.resources = this.listener.resources();
+            listener_1.reset();
+            this.cluster = new cluster_1.Cluster(this.clusterOpts);
+            this.service = new service_1.Service(this.cluster, this.opts);
+            this.listener = new listener_1.Listener(this.service, this.cluster);
+            this.resources = this.listener.generate();
         };
         ListenerTest.prototype.listener_resource = function () {
             var result = _.get(this.resources, 'App1ListenerRule.Type');
@@ -44,6 +45,11 @@ describe('service with port and url', function () {
             var result = _.get(this.resources, 'App1TargetGroup.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
         };
+        ListenerTest.prototype.priority = function () {
+            chai_1.expect(this.listener.priority).to.eql(2);
+            var listener = new listener_1.Listener(this.service, this.cluster);
+            chai_1.expect(listener.priority).to.eql(3);
+        };
         return ListenerTest;
     }());
     __decorate([
@@ -52,6 +58,9 @@ describe('service with port and url', function () {
     __decorate([
         mocha_typescript_1.test
     ], ListenerTest.prototype, "task_definition_resource_type", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ListenerTest.prototype, "priority", null);
     ListenerTest = __decorate([
         mocha_typescript_1.suite
     ], ListenerTest);
@@ -74,10 +83,11 @@ describe('service does not require load balancing', function () {
             };
         }
         ListenerTest.prototype.before = function () {
+            listener_1.reset();
             var cluster = new cluster_1.Cluster(this.cluster);
             var service = new service_1.Service(cluster, this.opts);
             this.listener = new listener_1.Listener(service, cluster);
-            this.resources = this.listener.resources();
+            this.resources = this.listener.generate();
         };
         ListenerTest.prototype.requireListener = function () {
             chai_1.expect(this.listener.required()).to.be.undefined;

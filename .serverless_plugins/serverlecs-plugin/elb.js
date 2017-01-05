@@ -3,7 +3,14 @@ var ELB = (function () {
     function ELB(cluster) {
         this.cluster = cluster;
     }
-    ELB.prototype.resources = function () {
+    Object.defineProperty(ELB.prototype, "name", {
+        get: function () {
+            return 'ELB';
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ELB.prototype.generate = function () {
         return {
             'ContainerlessELB': {
                 'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',

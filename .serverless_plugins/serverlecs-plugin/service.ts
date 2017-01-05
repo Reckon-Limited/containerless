@@ -23,7 +23,7 @@ export class Service implements Resource {
     this.cluster = cluster;
 
     this._name = opts.name;
-    this.tag = opts.tag || this.requireRepository();
+    this.tag = opts.tag || this.requireTag();
     this.repository = opts.repository || this.requireRepository();
 
     this.count = opts.count || 1;
@@ -37,9 +37,6 @@ export class Service implements Resource {
     if (this.url && !this.port) this.requirePort()
 
     this.listener = new Listener(this, cluster)
-
-    // this.servicePath = `${opts.path}/${opts.src}`
-    // path: `${this.serverless.config.servicePath}/${opts.src}`,
   }
 
   requirePort() {
@@ -59,7 +56,7 @@ export class Service implements Resource {
   }
 
   get image() {
-    return `${this.repository}:${this.name}-${this.tag}`
+    return `${this.repository}:${this._name}-${this.tag}`
   }
 
   get taskDefinitionName() {
@@ -71,24 +68,27 @@ export class Service implements Resource {
   }
 
   get name() {
-     return _.upperFirst(_.camelCase(this._name));
+    return _.upperFirst(_.camelCase(this._name));
   }
 
-  resources() {
-    let resources = this.listener.resources();
+  generate() {
+    let resources = this.listener.generate();
 
     resources[this.name] = {
       'Type': 'AWS::ECS::Service',
-      'DependsOn': ["ContainerlessListener", "ContainerlessELBRole", this.taskDefinitionName],
+      'DependsOn': ["ContainerlessListener", this.taskDefinitionName],
       'Properties': {
         'Cluster': this.cluster.id,
         'DesiredCount': this.count,
         'TaskDefinition': {
           'Ref': this.taskDefinitionName
         },
-        'LoadBalancers': this.listener.mapping,
-        'Role': this.cluster.elbRole
+        'LoadBalancers': this.listener.mapping
       }
+    }
+
+    if (this.listener.required()) {
+      resources[this.name]['Properties']['Role'] = this.cluster.elbRole;
     }
 
     resources[this.taskDefinitionName] = {

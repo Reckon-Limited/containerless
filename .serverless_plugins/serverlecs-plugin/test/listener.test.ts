@@ -3,7 +3,7 @@ import { suite, test, slow, timeout, skip, only } from "mocha-typescript";
 import { expect } from 'chai';
 
 import { Cluster } from '../cluster'
-import { Listener } from '../listener'
+import { Listener, reset } from '../listener'
 import { Service } from '../service'
 
 import * as _ from 'lodash';
@@ -12,7 +12,7 @@ declare function describe(desc: string, cb: Function):any
 
 describe('service with port and url', () => {
   @suite class ListenerTest {
-    cluster = {
+    clusterOpts = {
       vpcId: 'vpc-1',
       subnets: [
         'subnet-12359e64',
@@ -29,15 +29,18 @@ describe('service with port and url', () => {
       port: 1111
     }
 
+    cluster: Cluster
+    service: Service
     listener: Listener
     resources: any
 
     before() {
-      let cluster = new Cluster(this.cluster);
-      let service = new Service(cluster, this.opts);
+      reset();
+      this.cluster = new Cluster(this.clusterOpts);
+      this.service = new Service(this.cluster, this.opts);
 
-      this.listener = new Listener(service, cluster);
-      this.resources = this.listener.resources();
+      this.listener = new Listener(this.service, this.cluster);
+      this.resources = this.listener.generate();
     }
 
     @test listener_resource(){
@@ -48,6 +51,13 @@ describe('service with port and url', () => {
     @test task_definition_resource_type(){
       let result = _.get(this.resources, 'App1TargetGroup.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
+    }
+
+    @test priority() {
+      expect(this.listener.priority).to.eql(2);
+
+      let listener = new Listener(this.service, this.cluster);
+      expect(listener.priority).to.eql(3);
     }
 
   }
@@ -75,11 +85,12 @@ describe('service does not require load balancing', () => {
     resources: any
 
     before() {
+      reset();
       let cluster = new Cluster(this.cluster);
       let service = new Service(cluster, this.opts);
 
       this.listener = new Listener(service, cluster);
-      this.resources = this.listener.resources();
+      this.resources = this.listener.generate();
     }
 
     @test requireListener(){

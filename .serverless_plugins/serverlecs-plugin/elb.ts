@@ -5,13 +5,17 @@ import { Resource } from './resource'
 
 export class ELB implements Resource {
 
-  cluster:Cluster
+  cluster: Cluster
 
   constructor(cluster: Cluster) {
     this.cluster = cluster;
   }
 
-  resources() {
+  get name() {
+    return 'ELB';
+  }
+
+  generate() {
     return {
       'ContainerlessELB': {
         'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',

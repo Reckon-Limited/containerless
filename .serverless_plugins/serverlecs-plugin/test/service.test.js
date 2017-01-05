@@ -34,7 +34,7 @@ describe('with an existing cluster and a load balanced container', function () {
         ServiceTest.prototype.before = function () {
             var cluster = new cluster_1.Cluster(this.cluster);
             this.service = new service_1.Service(cluster, this.opts);
-            this.resources = this.service.resources();
+            this.resources = this.service.generate();
         };
         ServiceTest.prototype.service_name = function () {
             chai_1.expect(this.service.name).to.eql('App1');
@@ -103,7 +103,7 @@ describe('new cluster and container without load balancer', function () {
         ServiceTest.prototype.before = function () {
             var cluster = new cluster_1.Cluster(this.cluster);
             this.service = new service_1.Service(cluster, this.opts);
-            this.resources = this.service.resources();
+            this.resources = this.service.generate();
         };
         ServiceTest.prototype.service_name = function () {
             chai_1.expect(this.service.name).to.eql('App1');
@@ -111,6 +111,10 @@ describe('new cluster and container without load balancer', function () {
         ServiceTest.prototype.service_load_balancers = function () {
             var result = _.get(this.resources, 'App1.Properties.LoadBalancers');
             chai_1.expect(result).to.be.empty;
+        };
+        ServiceTest.prototype.service_role_undefined = function () {
+            var result = _.get(this.resources, 'App1.Properties.Role');
+            chai_1.expect(result).to.be.undefined;
         };
         return ServiceTest;
     }());
@@ -120,6 +124,9 @@ describe('new cluster and container without load balancer', function () {
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_load_balancers", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_role_undefined", null);
     ServiceTest = __decorate([
         mocha_typescript_1.suite
     ], ServiceTest);

@@ -14,6 +14,7 @@ export declare class Cluster implements Resource {
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
+    readonly name: string;
     readonly id: string | {
         'Ref': string;
     };
@@ -23,11 +24,18 @@ export declare class Cluster implements Resource {
     readonly elbRole: {
         'Ref': string;
     };
-    resources(): {} | {
+    generate(): {} | {
         'AutoScalingGroup': {
+            'Type': string;
             'CreationPolicy': {
                 'ResourceSignal': {
                     'Timeout': string;
+                };
+            };
+            'UpdatePolicy': {
+                'AutoScalingReplacingUpdate': {
+                    'PauseTime': string;
+                    'WillReplace': string;
                 };
             };
             'Properties': {
@@ -51,9 +59,7 @@ export declare class Cluster implements Resource {
         };
         'ContainerlessCluster': {
             'Type': string;
-            'Properties': {
-                'Name': string;
-            };
+            'DependsOn': string;
         };
         'ContainerlessLaunchConfiguration': {
             'Type': string;
@@ -64,9 +70,7 @@ export declare class Cluster implements Resource {
                     'Ref': string;
                 };
                 'ImageId': any;
-                'InstanceType': {
-                    'Ref': string;
-                };
+                'InstanceType': string;
                 'KeyName': string;
                 'SecurityGroups': {
                     'Ref': string;

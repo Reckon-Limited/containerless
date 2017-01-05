@@ -27,7 +27,7 @@ describe('with an existing cluster', function () {
         ELBTest.prototype.before = function () {
             var cluster = new cluster_1.Cluster(this.opts);
             this.elb = new elb_1.ELB(cluster);
-            this.resources = this.elb.resources();
+            this.resources = this.elb.generate();
         };
         ELBTest.prototype.elb_resource = function () {
             var result = _.get(this.resources, 'ContainerlessELB.Type');

@@ -28,7 +28,7 @@ describe('with an existing cluster', () => {
     before() {
       let cluster = new Cluster(this.opts);
       this.elb = new ELB(cluster);
-      this.resources = this.elb.resources()
+      this.resources = this.elb.generate()
     }
 
     @test elb_resource(){
@@ -45,7 +45,7 @@ describe('with an existing cluster', () => {
       let result = _.get(this.resources, 'ContainerlessELB.Properties.Subnets');
       expect(result).to.eql(this.opts.subnets)
     }
-    
+
     @test elb_resource_vpcId() {
       let result = _.get(this.resources, 'ContainerlessDefaultTargetGroup.Properties.VpcId');
       expect(result).to.eql(this.opts.vpcId)
