@@ -54,9 +54,7 @@
     "Hello1": {
       "Type": "AWS::ECS::Service",
       "DependsOn": [
-        "ContainerlessCluster",
         "ContainerlessListener",
-        "ContainerlessELBRole",
         "Hello1TaskDefinition"
       ],
       "Properties": {
@@ -173,7 +171,6 @@
       "Type": "AWS::ECS::Service",
       "DependsOn": [
         "ContainerlessListener",
-        "ContainerlessELBRole",
         "Hello2TaskDefinition"
       ],
       "Properties": {
@@ -244,7 +241,6 @@
       "Type": "AWS::ECS::Service",
       "DependsOn": [
         "ContainerlessListener",
-        "ContainerlessELBRole",
         "Hello3TaskDefinition"
       ],
       "Properties": {
@@ -266,7 +262,7 @@
           {
             "Name": "Hello3",
             "Essential": "true",
-            "Image": "005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:hello-2-1483491593",
+            "Image": "005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs:hello-3-1483491593",
             "Memory": 128,
             "LogConfiguration": {
               "LogDriver": "awslogs",
@@ -316,9 +312,15 @@
         "MaxSize": 1,
         "MinSize": "1",
         "VPCZoneIdentifier": [
-          "subnet-12359e64",
-          "subnet-b442c0d0",
-          "subnet-a2b967fb"
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz1"
+          },
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz2"
+          },
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz3"
+          }
         ]
       }
     },
@@ -513,9 +515,15 @@
           }
         ],
         "Subnets": [
-          "subnet-12359e64",
-          "subnet-b442c0d0",
-          "subnet-a2b967fb"
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz1"
+          },
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz2"
+          },
+          {
+            "Fn::ImportValue": "triple-az-vpc-PublicSubnetAz3"
+          }
         ],
         "SecurityGroups": [
           {
