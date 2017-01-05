@@ -7,47 +7,120 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 var mocha_typescript_1 = require("mocha-typescript");
 var chai_1 = require("chai");
+var cluster_1 = require("../cluster");
 var service_1 = require("../service");
 var _ = require("lodash");
-var opts = {
-    name: 'Blah',
-    repository: 'blah/vtha',
-    clusterId: 'arn:blah:vtha',
-    port: 3000,
-    path: '/blah/vtha/',
-    load_balancer: {
-        vpcId: 'vpc-123456',
-        security_group: 'sg-123456',
-        subnets: ['subnet-123456']
-    }
-};
-var ServiceTest = (function () {
-    function ServiceTest() {
-    }
-    ServiceTest.prototype.before = function () {
-        var service = new service_1.Service(opts);
-        this.resources = service.generateResources();
-    };
-    ServiceTest.prototype.assert_service_resource = function () {
-        var result = _.get(this.resources, 'blah.Type');
-        chai_1.expect(result).to.eq('AWS::ECS::Service');
-        result = _.get(this.resources, 'blah.Properties.Cluster');
-        chai_1.expect(result).to.eq(opts.clusterId);
-    };
-    ServiceTest.prototype.assert_container_resource = function () {
-        var result = _.get(this.resources, 'blahTaskDefinition.Type');
-        chai_1.expect(result).to.eq('AWS::ECS::TaskDefinition');
-        result = _.get(this.resources, 'blahTaskDefinition.Properties.ContainerDefinitions[0].Name');
-        chai_1.expect(result).to.eq('blah');
-    };
-    return ServiceTest;
-}());
-__decorate([
-    mocha_typescript_1.test('Service Resource')
-], ServiceTest.prototype, "assert_service_resource", null);
-__decorate([
-    mocha_typescript_1.test('Container Resource')
-], ServiceTest.prototype, "assert_container_resource", null);
-ServiceTest = __decorate([
-    mocha_typescript_1.suite
-], ServiceTest);
+describe('with an existing cluster and a load balanced container', function () {
+    var ServiceTest = (function () {
+        function ServiceTest() {
+            this.cluster = {
+                id: 'arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N',
+                security_group: 'sg-abcdef',
+                vpcId: 'vpc-1',
+                subnets: [
+                    'subnet-12359e64',
+                    'subnet-b442c0d0',
+                    'subnet-a2b967fb'
+                ]
+            };
+            this.opts = {
+                name: 'app-1',
+                repository: 'blah/vtha',
+                tag: 'tag-1',
+                url: '/',
+                port: 1111
+            };
+        }
+        ServiceTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.cluster);
+            this.service = new service_1.Service(cluster, this.opts);
+            this.resources = this.service.resources();
+        };
+        ServiceTest.prototype.service_name = function () {
+            chai_1.expect(this.service.name).to.eql('App1');
+        };
+        ServiceTest.prototype.service_resource = function () {
+            var result = _.get(this.resources, 'App1.Type');
+            chai_1.expect(result).to.eql('AWS::ECS::Service');
+        };
+        ServiceTest.prototype.task_definition_resource_type = function () {
+            var result = _.get(this.resources, 'App1TaskDefinition.Type');
+            chai_1.expect(result).to.eql('AWS::ECS::TaskDefinition');
+        };
+        ServiceTest.prototype.task_definition_resource = function () {
+            var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Name');
+            chai_1.expect(result).to.eql('App1');
+        };
+        ServiceTest.prototype.service_role = function () {
+            var result = _.get(this.resources, 'App1.Properties.Role.Ref');
+            chai_1.expect(result).to.eql('ContainerlessELBRole');
+        };
+        ServiceTest.prototype.service_load_balancers = function () {
+            var result = _.get(this.resources, 'App1.Properties.LoadBalancers');
+            chai_1.expect(result).to.not.be.empty;
+        };
+        return ServiceTest;
+    }());
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_name", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_resource", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "task_definition_resource_type", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "task_definition_resource", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_role", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_load_balancers", null);
+    ServiceTest = __decorate([
+        mocha_typescript_1.suite
+    ], ServiceTest);
+});
+describe('new cluster and container without load balancer', function () {
+    var ServiceTest = (function () {
+        function ServiceTest() {
+            this.cluster = {
+                vpcId: 'vpc-1',
+                subnets: [
+                    'subnet-12359e64',
+                    'subnet-b442c0d0',
+                    'subnet-a2b967fb'
+                ]
+            };
+            this.opts = {
+                name: 'app-1',
+                repository: 'blah/vtha',
+                tag: 'tag-1',
+            };
+        }
+        ServiceTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.cluster);
+            this.service = new service_1.Service(cluster, this.opts);
+            this.resources = this.service.resources();
+        };
+        ServiceTest.prototype.service_name = function () {
+            chai_1.expect(this.service.name).to.eql('App1');
+        };
+        ServiceTest.prototype.service_load_balancers = function () {
+            var result = _.get(this.resources, 'App1.Properties.LoadBalancers');
+            chai_1.expect(result).to.be.empty;
+        };
+        return ServiceTest;
+    }());
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_name", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_load_balancers", null);
+    ServiceTest = __decorate([
+        mocha_typescript_1.suite
+    ], ServiceTest);
+});

@@ -1,83 +1,100 @@
 import _ = require('lodash');
 
+import { Cluster } from './cluster'
 import { Listener } from './listener'
+import { Resource } from './resource'
 
-export interface ServiceOpts {
-  clusterId:  string
-  name:       string
-  count:      number
-  port:       number
-  memory:     number
-  image:      string
-  log_retention: number
-}
+export class Service implements Resource {
 
-export class Service {
-  opts:ServiceOpts
-  resources: any
-  listener: Listener
+  public port: number
+  public url: string
 
-  constructor(opts: any) {
-    this.opts = opts;
+  private _name: string
 
-    if (opts.urlPath) {
-      this.listener = new Listener(this.name, opts)
-    }
+  private cluster: Cluster
+  private count: number
+  private listener: Listener
+  private logGroupRetention: number
+  private memory: number
+  private repository: string
+  private tag: string
 
-    if (!this.opts.clusterId) {
-      throw new TypeError('Service must define a Cluster Id');
-    }
+  constructor(cluster: Cluster, opts: any) {
+    this.cluster = cluster;
 
-    if (opts.port && !this.opts.urlPath) {
-      throw new TypeError('Application must define a URL Path when mapping a port');
-    }
+    this._name = opts.name;
+    this.tag = opts.tag || this.requireRepository();
+    this.repository = opts.repository || this.requireRepository();
 
-    if (opts.urlPath && !this.opts.port) {
-      throw new TypeError('Application must define a Port when mapping a URL Path');
-    }
+    this.count = opts.count || 1;
+    this.memory = opts.memory || 128;
+    this.logGroupRetention = opts.log_group_retention || 7;
+
+    this.port = opts.port;
+    this.url = opts.url;
+
+    if (this.port && !this.url) this.requireURL()
+    if (this.url && !this.port) this.requirePort()
+
+    this.listener = new Listener(this, cluster)
+
+    // this.servicePath = `${opts.path}/${opts.src}`
+    // path: `${this.serverless.config.servicePath}/${opts.src}`,
+  }
+
+  requirePort() {
+    throw new TypeError('Service definition requires a Port when mapping a URL');
+  }
+
+  requireRepository() {
+    throw new TypeError('Service definition requires a Repository');
+  }
+
+  requireTag() {
+    throw new TypeError('Service definition requires a Tag');
+  }
+
+  requireURL() {
+    throw new TypeError('Service definition requires a URL when mapping a Port');
+  }
+
+  get image() {
+    return `${this.repository}:${this.name}-${this.tag}`
   }
 
   get taskDefinitionName() {
     return `${this.name}TaskDefinition`;
   }
+
   get logGroupName() {
     return `${this.name}CloudwatchLogGroup`;
   }
 
   get name() {
-     return _.camelCase(this.opts.name)
+     return _.upperFirst(_.camelCase(this._name));
   }
 
-  generateResources() {
+  resources() {
+    let resources = this.listener.resources();
 
-    let resources = {}
-
-    let service = {
+    resources[this.name] = {
       'Type': 'AWS::ECS::Service',
       'DependsOn': ["ContainerlessListener", "ContainerlessELBRole", this.taskDefinitionName],
       'Properties': {
-        'Cluster': this.opts.clusterId,
-        'DesiredCount': this.opts.count || 1,
+        'Cluster': this.cluster.id,
+        'DesiredCount': this.count,
         'TaskDefinition': {
           'Ref': this.taskDefinitionName
-        }
+        },
+        'LoadBalancers': this.listener.mapping,
+        'Role': this.cluster.elbRole
       }
     }
-
-    if (this.listener) {
-      _.merge(resources,this.listener.generateResources());
-      _.set(service, 'Properties.LoadBalancers', this.listener.mapping());
-      _.set(service, 'Properties.Role', {'Ref': 'ContainerlessELBRole'});
-    }
-
-    resources[this.name] = service;
 
     resources[this.taskDefinitionName] = {
       'Type': 'AWS::ECS::TaskDefinition',
       'Properties': {
-        'Family': {
-          'Fn::Sub': '${AWS::StackName}-task'
-        },
+        'Family': this.name,
         'ContainerDefinitions': this.definition()
       }
     }
@@ -88,7 +105,7 @@ export class Service {
         'LogGroupName': {
           'Fn::Sub': `${this.name}-\${AWS::StackName}`
         },
-        'RetentionInDays': this.opts.log_retention
+        'RetentionInDays': this.logGroupRetention
       }
     }
 
@@ -97,11 +114,11 @@ export class Service {
 
   definition = () => {
 
-    let definition = {
-      'Name':this.name,
+    let definition:any = {
+      'Name': this.name,
       'Essential': 'true',
-      'Image': this.opts.image,
-      'Memory': this.opts.memory || 128,
+      'Image': this.image,
+      'Memory': this.memory,
       'LogConfiguration': {
         'LogDriver': 'awslogs',
         'Options': {
@@ -118,8 +135,8 @@ export class Service {
       }
     }
 
-    if (this.opts.port) {
-     definition['PortMappings'] = [{ 'ContainerPort': this.opts.port }]
+    if (this.port) {
+     definition['PortMappings'] = [{ 'ContainerPort': this.port }]
     }
 
     return [definition]
