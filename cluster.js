@@ -200,39 +200,39 @@ var Cluster = (function () {
             'ContainerlessSecurityGroupDynamicPorts': {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
+                    'IpProtocol': 'tcp',
                     'FromPort': 31000,
+                    'ToPort': 61000,
                     'GroupId': {
                         'Ref': 'ContainerlessSecurityGroup'
                     },
-                    'IpProtocol': 'tcp',
                     'SourceSecurityGroupId': {
                         'Ref': 'ContainerlessSecurityGroup'
-                    },
-                    'ToPort': 61000
+                    }
                 }
             },
             'ContainerlessSecurityGroupHTTP': {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
                     'CidrIp': '0.0.0.0/0',
+                    'IpProtocol': 'tcp',
                     'FromPort': '80',
+                    'ToPort': '80',
                     'GroupId': {
                         'Ref': 'ContainerlessSecurityGroup'
-                    },
-                    'IpProtocol': 'tcp',
-                    'ToPort': '80'
+                    }
                 },
             },
             'ContainerlessSecurityGroupHTTPS': {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
                     'CidrIp': '0.0.0.0/0',
+                    'IpProtocol': 'tcp',
                     'FromPort': '443',
+                    'ToPort': '443',
                     'GroupId': {
                         'Ref': 'ContainerlessSecurityGroup'
-                    },
-                    'IpProtocol': 'tcp',
-                    'ToPort': '443'
+                    }
                 }
             },
             'ContainerlessELBRole': {

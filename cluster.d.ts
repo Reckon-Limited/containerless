@@ -117,39 +117,39 @@ export declare class Cluster implements Resource {
         'ContainerlessSecurityGroupDynamicPorts': {
             'Type': string;
             'Properties': {
+                'IpProtocol': string;
                 'FromPort': number;
+                'ToPort': number;
                 'GroupId': {
                     'Ref': string;
                 };
-                'IpProtocol': string;
                 'SourceSecurityGroupId': {
                     'Ref': string;
                 };
-                'ToPort': number;
             };
         };
         'ContainerlessSecurityGroupHTTP': {
             'Type': string;
             'Properties': {
                 'CidrIp': string;
+                'IpProtocol': string;
                 'FromPort': string;
+                'ToPort': string;
                 'GroupId': {
                     'Ref': string;
                 };
-                'IpProtocol': string;
-                'ToPort': string;
             };
         };
         'ContainerlessSecurityGroupHTTPS': {
             'Type': string;
             'Properties': {
                 'CidrIp': string;
+                'IpProtocol': string;
                 'FromPort': string;
+                'ToPort': string;
                 'GroupId': {
                     'Ref': string;
                 };
-                'IpProtocol': string;
-                'ToPort': string;
             };
         };
         'ContainerlessELBRole': {
