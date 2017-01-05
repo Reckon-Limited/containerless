@@ -14,7 +14,8 @@ var ServerlecsPlugin = (function () {
             });
         };
         this.build = function () {
-            _.each(_this.options.applications, function (app, name) {
+            _this.serverless.cli.log("Configuring containerless");
+            _.each(_this.opts.applications, function (app, name) {
                 _this.serverless.cli.log("Building service " + name);
                 var opts = {
                     path: _this.serverless.config.servicePath + "/" + app.src,
@@ -24,7 +25,6 @@ var ServerlecsPlugin = (function () {
             });
         };
         this.serverless = serverless;
-        this.options = options;
         this.provider = 'aws';
         this.tag = this.getTag();
         this.opts = this.getOptions();

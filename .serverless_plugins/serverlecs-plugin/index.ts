@@ -33,7 +33,6 @@ class ServerlecsPlugin {
   private serverless: any;
   private applications: Array<any>
 
-  private options: any;
   private commands: Commands;
   private hooks: Hooks;
 
@@ -44,7 +43,6 @@ class ServerlecsPlugin {
 
   constructor(serverless: any, options: any) {
     this.serverless = serverless;
-    this.options = options;
     this.provider = 'aws';
 
     this.tag = this.getTag();
@@ -79,7 +77,8 @@ class ServerlecsPlugin {
   }
 
   build = () => {
-    _.each(this.options.applications, (app, name: string) => {
+    this.serverless.cli.log(`Configuring containerless`);
+    _.each(this.opts.applications, (app, name: string) => {
       this.serverless.cli.log(`Building service ${name}`);
       let opts = {
         path: `${this.serverless.config.servicePath}/${app.src}`,

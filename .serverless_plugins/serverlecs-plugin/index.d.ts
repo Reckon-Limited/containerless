@@ -1,7 +1,6 @@
 declare class ServerlecsPlugin {
     private serverless;
     private applications;
-    private options;
     private commands;
     private hooks;
     opts: any;
