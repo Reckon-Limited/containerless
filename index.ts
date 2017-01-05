@@ -78,6 +78,8 @@ class ServerlecsPlugin {
     this.serverless.cli.log(`Configuring containerless`);
     _.each(this.opts.applications, (app, name: string) => {
       this.serverless.cli.log(`Building service ${name}`);
+
+      if (!app.src) app.src = name;
       let opts = {
         path: `${this.serverless.config.servicePath}/${app.src}`,
         image: `${this.opts.repository}:${name}-${this.tag}`,

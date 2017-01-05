@@ -21,6 +21,8 @@ var ServerlecsPlugin = (function () {
             _this.serverless.cli.log("Configuring containerless");
             _.each(_this.opts.applications, function (app, name) {
                 _this.serverless.cli.log("Building service " + name);
+                if (!app.src)
+                    app.src = name;
                 var opts = {
                     path: _this.serverless.config.servicePath + "/" + app.src,
                     image: _this.opts.repository + ":" + name + "-" + _this.tag,
