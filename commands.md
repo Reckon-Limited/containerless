@@ -6,4 +6,4 @@ cloudformation create-stack --stack-name blah --template-body file:///Users/toby
 
 cloudformation create-stack --stack-name vtha --template-body file:///Users/toby.hede/src/serverl-ecs/cfn/cluster.yml --capabilities CAPABILITY_IAM --parameters file:///Users/toby.hede/src/serverl-ecs/cfn/params.json
 
-cloudformation create-stack --stack-name blah1 --template-body file:///Users/toby.hede/src/serverl-ecs/.serverless/cloudformation-template-update-stack.json  --capabilities CAPABILITY_IAM
+cloudformation create-stack --stack-name blah --template-body file:///Users/toby.hede/src/serverl-ecs/.serverless/cloudformation-template-update-stack.json  --capabilities CAPABILITY_IAM
