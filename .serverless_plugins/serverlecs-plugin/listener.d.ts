@@ -1,14 +1,16 @@
-export declare class Listener {
-    name: string;
-    vpcId: string;
-    port: number;
-    pathPattern: string;
+import { Cluster } from './cluster';
+import { Resource } from './resource';
+import { Service } from './Service';
+export declare class Listener implements Resource {
+    service: Service;
+    cluster: Cluster;
     priority: number;
-    constructor(name: string, opts: any);
+    constructor(service: Service, cluster: Cluster);
     readonly listenerRuleName: string;
     readonly targetGroupName: string;
-    generateResources(): any;
-    mapping(): {
+    required(): number | "";
+    resources(): any;
+    readonly mapping: {
         'ContainerName': string;
         'ContainerPort': number;
         'TargetGroupArn': {

@@ -1,29 +1,35 @@
 import * as _ from 'lodash';
 
-export class Listener {
-  name: string
-  vpcId: string
-  port: number
-  pathPattern: string
+import { Cluster } from './cluster'
+import { Resource } from './resource'
+import { Service } from './Service'
+
+export class Listener implements Resource {
+
+  service: Service
+  cluster: Cluster
   priority: number
 
-  constructor(name: string, opts:any) {
-    this.name = name;
-    this.vpcId = opts.load_balancer.vpcId;
-    this.port = opts.port;
-    this.pathPattern = opts.urlPath;
-    this.priority = opts.priority;
+  constructor(service: Service, cluster: Cluster) {
+    this.service = service;
+    this.cluster = cluster;
   }
 
   get listenerRuleName() {
-    return `${this.name}ListenerRule`;
+    return `${this.service.name}ListenerRule`;
   }
 
   get targetGroupName() {
-    return `${this.name}TargetGroup`;
+    return `${this.service.name}TargetGroup`;
   }
 
-  generateResources() {
+  required() {
+    return (this.service.url && this.service.port);
+  }
+
+  resources() {
+    if (!this.required()) return {}
+
     let resources:any = {}
 
     resources[this.listenerRuleName] = {
@@ -41,7 +47,7 @@ export class Listener {
         'Conditions' : [
           {
             'Field' : 'path-pattern',
-            'Values' : [ this.pathPattern ]
+            'Values' : [ this.service.url ]
           }
         ],
         'ListenerArn' : {'Ref': 'ContainerlessListener'},
@@ -61,17 +67,19 @@ export class Listener {
         'Port': 80,
         'Protocol': 'HTTP',
         'UnhealthyThresholdCount': 2,
-        'VpcId': this.vpcId
+        'VpcId': this.cluster.vpcId
       }
     }
 
     return resources;
   }
 
-  mapping() {
+  get mapping() {
+    if (!this.required()) return []
+
     return [{
-      'ContainerName': this.name,
-      'ContainerPort': this.port,
+      'ContainerName': this.service.name,
+      'ContainerPort': this.service.port,
       'TargetGroupArn': {
         'Ref': this.targetGroupName
       }
