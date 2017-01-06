@@ -51,13 +51,13 @@ class ServerlecsPlugin {
     this.commands = {
       "cls-build": {
         usage: 'Build an ECS cluster',
-        lifecycleEvents: ['build']
+        lifecycleEvents: ['run']
       }
     };
 
     this.hooks = {
       'deploy:compileFunctions': this.compile,
-      'cls-build:build': this.build,
+      'cls-build:run': this.build,
     }
   }
 
