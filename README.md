@@ -23,13 +23,27 @@ plugins:
 ```
 
 
-
 ## Commands ##
 
-`sls cls-build`
+Configured Applications will be added to the stack as part of the serverless deploy command.
 
-- builds a set of docker images
-- push images to repository
+When deploying, you should provide the appropriate docker image tag to use
+
+`sls deploy --noDeploy --tag hello-world-1`
+
+### Building ###
+
+Containerless provides the `cls-build` command to build and push a set of docker images to the nominated repostory.
+
+Each application is assumed to have a `Dockerfile`, and to be in a directory inside the serverless parent project.
+
+```
+sls cls-build
+
+sls cls-build --tag hello-world-1
+```
+
+If a tag is not provided, a tag in the form `{app-name}-{timestamp}` is generated and used.
 
 
 ## Configuration ##
