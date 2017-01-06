@@ -4,6 +4,8 @@ Warning: may contain containers. Also, docker.
 
 Deploys applications into an AWS ECS Cluster.
 
+![Containerless Logo](logo.png)
+
 
 ## Installation ##
 
@@ -214,6 +216,6 @@ The sample VPC CloudFormation template provided in `examples/vpc.cfn.yml` sets t
 
 ## Contributing ##
 
-This project has been written in typescript, which means you need to edit the `.ts` files, not the generated JavaScript files. 
+This project has been written in typescript, which means you need to edit the `.ts` files, not the generated JavaScript files.
 
 The Atom Typescript plugin is *ace*.
