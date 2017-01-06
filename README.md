@@ -5,27 +5,21 @@ Warning: may contain containers. Also, docker.
 Deploys applications into an AWS ECS Cluster.
 
 
-
 ## Installation ##
 
-The plugin is currently not published to npm, so you will need to copy and install it locally in your serverless application.
+Inside your serverless project:
 
-`cp containerless  .serverless_plugins`
+```
+yarn add containerless
+```
 
-Add the following to serverless.yml
+Add the following to serverless.yml:
 
 ```
 plugins:
   - containerless
 ```
 
-
-
-<!--
-```
-yarn add containerless
-```
--->
 
 
 ## Commands ##
@@ -64,8 +58,12 @@ Required fields:
  - vpcId
  - subnets
 
- A vpcId and one or more subnets in that VPC are required.
- If using an existing cluster, provide the VPC and subnets that the cluster has been created in.
+A vpcId and one or more subnets in that VPC are required.
+If using an existing cluster, provide the VPC and subnets that the cluster has been created in.
+
+If you need to define a VPC, a sample CloudFormation template is provided in `examples/vpc.cfn.yml`.
+You can use the
+
 
 ### Use Existing Cluster ###
 
@@ -120,7 +118,7 @@ custom:
 ### Applications ###
 
 Each application requires a `Dockerfile` with the relevant docker setup.
-Please refer to the samples provided for more details.
+Please refer to the examples provided for more details.
 
 Fields:
   - src (if not provided will default to the application name)  
@@ -140,7 +138,6 @@ Only one application can be mounted to the root url '/', because of the way in w
 Other applications will be routed based on a pattern, and you will need to remember to mount your application on that route as the load balancer forwards the whole url.
 
 For example, requests to the url `/hello` will be forwarded to the application retaining the `/hello` path, so your application needs to handle this.
-
 
 
 ```
@@ -180,3 +177,43 @@ Sample Security Group Configuration
     }
   }
 ```
+
+
+### Handy Hint ###
+
+CloudFormation can export parameters that can be consumed by other cfn stacks, which makes using Resources in those stacks much simpler.
+
+For example, in your VPC configuration you can export VpcId and Subnet parameters:
+
+```
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value:
+      Ref: Vpc
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-VpcID"
+```
+
+
+And then import these into your containerless configuration:
+
+```
+cluster:
+  vpcId:
+    Fn::ImportValue: vpc-VpcID
+  subnets:
+    - Fn::ImportValue: vpc-PublicSubnetAz1
+    - Fn::ImportValue: vpc-PublicSubnetAz2
+    - Fn::ImportValue: vpc-PublicSubnetAz3
+```
+
+The sample VPC CloudFormation template provided in `examples/vpc.cfn.yml` sets these exports up for you.
+
+
+## Contributing ##
+
+This project has been written in typescript, which means you need to edit the `.ts` files, not the generated JavaScript files. 
+
+The Atom Typescript plugin is *ace*.
