@@ -106,7 +106,7 @@ export class Cluster implements Resource {
           'LaunchConfigurationName': {
             'Ref': 'ContainerlessLaunchConfiguration'
           },
-          'MaxSize': this.size,
+          'MaxSize': this.size + 1,
           'MinSize': '1',
           'VPCZoneIdentifier': this.subnets
         }
