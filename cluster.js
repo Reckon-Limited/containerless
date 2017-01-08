@@ -91,8 +91,11 @@ var Cluster = (function () {
                 },
                 'UpdatePolicy': {
                     'AutoScalingReplacingUpdate': {
-                        'PauseTime': 'PT5M',
                         'WillReplace': 'true'
+                    },
+                    'AutoScalingRollingUpdate': {
+                        'MinInstancesInService': 1,
+                        'MaxBatchSize': 1
                     }
                 },
                 'Properties': {

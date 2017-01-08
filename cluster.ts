@@ -97,9 +97,12 @@ export class Cluster implements Resource {
         },
         'UpdatePolicy': {
           'AutoScalingReplacingUpdate': {
-            'PauseTime': 'PT5M',
             'WillReplace': 'true'
-          }
+          },
+          'AutoScalingRollingUpdate': {
+           'MinInstancesInService': 1,
+           'MaxBatchSize': 1
+         }
         },
         'Properties': {
           'DesiredCapacity': this.capacity,
