@@ -4,7 +4,7 @@ Tired of JavaScript all the time?
 
 Does your application not quite work in the constraints of the serverless future?
 
-What if a your Ruby/Go/Idris/Whatever application was almost (but not quite) as easy to deploy as a Lambda function?
+What if your Ruby/Go/Idris/Whatever application was almost (but not quite) as easy to deploy as a Lambda function?
 
 Introducing `containerless`
 
