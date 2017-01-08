@@ -1,8 +1,17 @@
 # Containerless #
 
+Tired of JavaScript all the time?
+
+Does your application not quite work in the constraints of the serverless future?
+
+What if a your Ruby/Go/Idris/Whatever application was almost (but not quite) as easy to deploy as a Lambda function?
+
+Introducing `containerless`
+
+Simple, declaratively configured container deployments for AWS.
+
 Warning: may contain containers. Also, docker.
 
-Deploys applications into an AWS ECS Cluster.
 
 ![Containerless Logo](logo.png)
 
