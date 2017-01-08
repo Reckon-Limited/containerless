@@ -1,5 +1,3 @@
-import AWS = require('aws-sdk');
-
 import _ = require('lodash');
 
 const execSync = require('child_process').execSync;
