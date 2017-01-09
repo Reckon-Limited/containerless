@@ -6,8 +6,6 @@ import {Serverless, Command} from './serverless';
 
 import { prepare } from './factory'
 
-
-
 class ServerlecsPlugin {
   private serverless: Serverless;
   private applications: Array<any>

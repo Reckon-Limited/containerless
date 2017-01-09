@@ -3,7 +3,7 @@ export interface Config {
 }
 
 export interface CLI {
-   log(msg?: string, ...rest: any[]): void;
+   log(msg: string): void;
 }
 
 export interface Service {
