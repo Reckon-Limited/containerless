@@ -2,10 +2,6 @@
 var _ = require("lodash");
 var execSync = require('child_process').execSync;
 var factory_1 = require("./factory");
-// interface Serverless {
-//   cli: any
-//   config: any
-// }
 var ServerlecsPlugin = (function () {
     function ServerlecsPlugin(serverless, options) {
         var _this = this;

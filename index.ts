@@ -2,37 +2,18 @@ import _ = require('lodash');
 
 const execSync = require('child_process').execSync;
 
+import {Serverless, Command} from './serverless';
+
 import { prepare } from './factory'
 
-// import { Cluster } from './cluster';
-// import { Service } from './service';
-// import { ELB } from './elb';
 
-interface Command {
-  usage: String
-  lifecycleEvents: Array<string>;
-  options?: {[key: string]: any}
-}
-
-interface Commands {
-  [key: string]: Command;
-}
-
-interface Hooks {
-  [key: string]: Function;
-}
-
-// interface Serverless {
-//   cli: any
-//   config: any
-// }
 
 class ServerlecsPlugin {
-  private serverless: any;
+  private serverless: Serverless;
   private applications: Array<any>
 
-  private commands: Commands;
-  private hooks: Hooks;
+  private commands: {[key: string]: Command};
+  private hooks: {[key: string]: Function};
 
   opts: any
   tag: string
