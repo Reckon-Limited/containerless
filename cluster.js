@@ -2,17 +2,17 @@
 var Cluster = (function () {
     function Cluster(opts) {
         this.amiIds = {
-            'ap-northeast-1': 'ami-08f7956f',
-            'ap-southeast-1': 'ami-f4832f97',
-            'ap-southeast-2': 'ami-774b7314',
-            'ca-central-1': 'ami-be45f7da',
-            'eu-central-1': 'ami-e012d48f',
-            'eu-west-1': 'ami-ba346ec9',
-            'eu-west-2': 'ami-42c5cf26',
-            'us-east-1': 'ami-6df8fe7a',
-            'us-east-2': 'ami-c6b5efa3',
-            'us-west-1': 'ami-1eda8d7e',
-            'us-west-2': 'ami-a2ca61c2',
+            'ap-northeast-1': 'ami-30bdce57',
+            'ap-southeast-1': 'ami-9f75ddfc',
+            'ap-southeast-2': 'ami-cf393cac',
+            'ca-central-1': 'ami-1b01b37f',
+            'eu-central-1': 'ami-38dc1157',
+            'eu-west-1': 'ami-e3fbd290',
+            'eu-west-2': 'ami-77f6fc13',
+            'us-east-1': 'ami-a58760b3',
+            'us-east-2': 'ami-a6e4bec3',
+            'us-west-1': 'ami-74cb9b14',
+            'us-west-2': 'ami-5b6dde3b'
         };
         if (opts.id) {
             this._id = opts.id;
