@@ -44,6 +44,7 @@ var ServerlecsPlugin = (function () {
     ServerlecsPlugin.prototype.dockerBuildAndPush = function (app) {
         this.dockerBuild(app.path, app.image);
         this.dockerPush(app.image);
+        this.serverless.cli.log("Built with tag: " + tag);
     };
     ServerlecsPlugin.prototype.dockerPush = function (tag) {
         var command = "docker push " + tag;
