@@ -13,6 +13,7 @@ export class Service implements Resource {
 
   private cluster: Cluster
   private count: number
+  private environment: Array<any>
   private listener: Listener
   private logGroupRetention: number
   private memory: number
@@ -29,6 +30,11 @@ export class Service implements Resource {
     this.count = opts.count || 1;
     this.memory = opts.memory || 128;
     this.logGroupRetention = opts.log_group_retention || 7;
+    this.environment = _.map(opts.environment, (o) => {
+      let ary = _.chain(o).toPairs().flatten().value();
+      let [k, v] = ary;
+      return {name: k, value: v}
+    })
 
     this.port = opts.port;
     this.url = opts.url;
@@ -119,6 +125,7 @@ export class Service implements Resource {
       'Essential': 'true',
       'Image': this.image,
       'Memory': this.memory,
+      'Environment': this.environment,
       'LogConfiguration': {
         'LogDriver': 'awslogs',
         'Options': {

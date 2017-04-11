@@ -28,7 +28,10 @@ describe('with an existing cluster and a load balanced container', () => {
       repository: 'blah/vtha',
       tag: 'tag-1',
       url: '/',
-      port: 1111
+      port: 1111,
+      environment: [
+        {blah: 'vtha'}
+      ]
     }
 
     service:Service
@@ -57,6 +60,11 @@ describe('with an existing cluster and a load balanced container', () => {
     @test task_definition_resource(){
       let result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Name');
       expect(result).to.eql('App1');
+    }
+
+    @test environment_variables(){
+      let result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+      expect(result).to.eql([{name: 'blah', value: 'vtha'}]);
     }
 
     @test service_role(){
@@ -109,6 +117,11 @@ describe('new cluster and container without load balancer', () => {
     @test service_role_undefined(){
       let result = _.get(this.resources, 'App1.Properties.Role');
       expect(result).to.be.undefined;
+    }
+
+    @test environment_variables(){
+      let result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+      expect(result).to.be.empty;
     }
 
   }

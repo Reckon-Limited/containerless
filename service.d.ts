@@ -6,6 +6,7 @@ export declare class Service implements Resource {
     private _name;
     private cluster;
     private count;
+    private environment;
     private listener;
     private logGroupRetention;
     private memory;

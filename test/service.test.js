@@ -28,7 +28,10 @@ describe('with an existing cluster and a load balanced container', function () {
                 repository: 'blah/vtha',
                 tag: 'tag-1',
                 url: '/',
-                port: 1111
+                port: 1111,
+                environment: [
+                    { blah: 'vtha' }
+                ]
             };
         }
         ServiceTest.prototype.before = function () {
@@ -50,6 +53,10 @@ describe('with an existing cluster and a load balanced container', function () {
         ServiceTest.prototype.task_definition_resource = function () {
             var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Name');
             chai_1.expect(result).to.eql('App1');
+        };
+        ServiceTest.prototype.environment_variables = function () {
+            var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+            chai_1.expect(result).to.eql([{ name: 'blah', value: 'vtha' }]);
         };
         ServiceTest.prototype.service_role = function () {
             var result = _.get(this.resources, 'App1.Properties.Role.Ref');
@@ -73,6 +80,9 @@ describe('with an existing cluster and a load balanced container', function () {
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "task_definition_resource", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "environment_variables", null);
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_role", null);
@@ -116,6 +126,10 @@ describe('new cluster and container without load balancer', function () {
             var result = _.get(this.resources, 'App1.Properties.Role');
             chai_1.expect(result).to.be.undefined;
         };
+        ServiceTest.prototype.environment_variables = function () {
+            var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+            chai_1.expect(result).to.be.empty;
+        };
         return ServiceTest;
     }());
     __decorate([
@@ -127,6 +141,9 @@ describe('new cluster and container without load balancer', function () {
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_role_undefined", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "environment_variables", null);
     ServiceTest = __decorate([
         mocha_typescript_1.suite
     ], ServiceTest);

@@ -10,6 +10,7 @@ var Service = (function () {
                 'Essential': 'true',
                 'Image': _this.image,
                 'Memory': _this.memory,
+                'Environment': _this.environment,
                 'LogConfiguration': {
                     'LogDriver': 'awslogs',
                     'Options': {
@@ -37,6 +38,11 @@ var Service = (function () {
         this.count = opts.count || 1;
         this.memory = opts.memory || 128;
         this.logGroupRetention = opts.log_group_retention || 7;
+        this.environment = _.map(opts.environment, function (o) {
+            var ary = _.chain(o).toPairs().flatten().value();
+            var k = ary[0], v = ary[1];
+            return { name: k, value: v };
+        });
         this.port = opts.port;
         this.url = opts.url;
         if (this.port && !this.url)
