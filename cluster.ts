@@ -4,6 +4,7 @@ import { Resource } from './resource'
 
 export class Cluster implements Resource {
 
+  // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
   amiIds:any = {
     'us-east-1': 'ami-275ffe31',
     'us-east-2': 'ami-62745007',

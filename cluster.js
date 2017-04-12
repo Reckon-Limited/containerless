@@ -1,6 +1,7 @@
 "use strict";
 var Cluster = (function () {
     function Cluster(opts) {
+        // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
         this.amiIds = {
             'us-east-1': 'ami-275ffe31',
             'us-east-2': 'ami-62745007',
