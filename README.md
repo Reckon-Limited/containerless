@@ -150,6 +150,7 @@ Fields:
   - memory (defaults to 128)
   - url
   - port
+  - environment (optional array of key/values)
 
 In order to map to the load balancer applications need to provide both a URL and Port.
 
@@ -177,6 +178,8 @@ custom:
         src: src-2
         url: /hello
         port: 3000
+        environment:  
+          - KEY: 'value'
       hello-3
 ```
 
