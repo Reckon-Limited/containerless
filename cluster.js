@@ -22,15 +22,25 @@ var Cluster = (function () {
         else {
             this.capacity = opts.capacity || 1;
             this.instance_type = opts.instance_type || 't2.micro';
+            this.key_name = opts.key_name || 'ecs-instance-key';
             this.region = opts.region || 'ap-southeast-2';
             this.size = opts.size || 1;
+            this.max_size = opts.max_size || this.size + 1;
+            this.min_size = opts.min_size || 1;
         }
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
         this.subnets = opts.subnets || this.requireSubnets();
+        this.subnets = opts.subnets || this.requireSubnets();
     }
     Cluster.prototype.requireVpcId = function () {
         throw new TypeError('Cluster requires a VPC Id');
+    };
+    Cluster.prototype.requireKey = function () {
+        throw new TypeError('Cluster requires a Key Name');
+    };
+    Cluster.prototype.requireCertificate = function () {
+        throw new TypeError('Cluster requires a Certificate ARN');
     };
     Cluster.prototype.requireSubnets = function () {
         throw new TypeError('Cluster requires at least one Subnet Id');
@@ -104,8 +114,8 @@ var Cluster = (function () {
                     'LaunchConfigurationName': {
                         'Ref': 'ContainerlessLaunchConfiguration'
                     },
-                    'MaxSize': this.size + 1,
-                    'MinSize': '1',
+                    'MaxSize': this.max_size,
+                    'MinSize': this.min_size,
                     'VPCZoneIdentifier': this.subnets
                 }
             },
@@ -132,7 +142,7 @@ var Cluster = (function () {
                     },
                     'ImageId': this.ami(),
                     'InstanceType': this.instance_type,
-                    'KeyName': 'ecs-instance',
+                    'KeyName': this.key_name,
                     'SecurityGroups': [
                         {
                             'Ref': 'ContainerlessSecurityGroup'
@@ -287,44 +297,3 @@ var Cluster = (function () {
     return Cluster;
 }());
 exports.Cluster = Cluster;
-//     'AutoscalingRole': {
-//       'Properties': {
-//         'AssumeRolePolicyDocument': {
-//           'Statement': [
-//             {
-//               'Action': [
-//                 'sts:AssumeRole'
-//               ],
-//               'Effect': 'Allow',
-//               'Principal': {
-//                 'Service': [
-//                   'application-autoscaling.amazonaws.com'
-//                 ]
-//               }
-//             }
-//           ]
-//         },
-//         'Path': '/',
-//         'Policies': [
-//           {
-//             'PolicyDocument': {
-//               'Statement': [
-//                 {
-//                   'Action': [
-//                     'application-autoscaling:*',
-//                     'cloudwatch:DescribeAlarms',
-//                     'cloudwatch:PutMetricAlarm',
-//                     'ecs:DescribeServices',
-//                     'ecs:UpdateService'
-//                   ],
-//                   'Effect': 'Allow',
-//                   'Resource': '*'
-//                 }
-//               ]
-//             },
-//             'PolicyName': 'ecs-service-autoscaling'
-//           }
-//         ]
-//       },
-//       'Type': 'AWS::IAM::Role'
-//     },

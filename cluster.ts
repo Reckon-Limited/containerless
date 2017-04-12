@@ -18,7 +18,7 @@ export class Cluster implements Resource {
     'ap-southeast-2': 'ami-fbe9eb98ce',
     'ca-central-1': 'ami-ee58e58a'
   }
-    
+
   public subnets: string
   public vpcId: string
 
@@ -26,7 +26,11 @@ export class Cluster implements Resource {
   private _securityGroup: string
 
   private capacity: number
+  private certificate: string
   private instance_type: string
+  private key_name: string
+  private max_size: number
+  private min_size: number
   private region: string
   private size: number
 
@@ -37,16 +41,28 @@ export class Cluster implements Resource {
     } else {
       this.capacity = opts.capacity || 1
       this.instance_type = opts.instance_type || 't2.micro'
+      this.key_name = opts.key_name || 'ecs-instance-key'
       this.region = opts.region || 'ap-southeast-2'
       this.size = opts.size || 1
+      this.max_size = opts.max_size || this.size + 1
+      this.min_size = opts.min_size || 1
     }
     // we always need a vpc and at least one subnet
     this.vpcId = opts.vpcId || this.requireVpcId()
+    this.subnets = opts.subnets || this.requireSubnets()
     this.subnets = opts.subnets || this.requireSubnets()
   }
 
   requireVpcId() {
     throw new TypeError('Cluster requires a VPC Id');
+  }
+
+  requireKey() {
+    throw new TypeError('Cluster requires a Key Name');
+  }
+
+  requireCertificate() {
+    throw new TypeError('Cluster requires a Certificate ARN');
   }
 
   requireSubnets() {
@@ -110,8 +126,8 @@ export class Cluster implements Resource {
           'LaunchConfigurationName': {
             'Ref': 'ContainerlessLaunchConfiguration'
           },
-          'MaxSize': this.size + 1,
-          'MinSize': '1',
+          'MaxSize': this.max_size,
+          'MinSize': this.min_size,
           'VPCZoneIdentifier': this.subnets
         }
       },
@@ -138,7 +154,7 @@ export class Cluster implements Resource {
           },
           'ImageId': this.ami(),
           'InstanceType': this.instance_type,
-          'KeyName': 'ecs-instance',
+          'KeyName': this.key_name,
           'SecurityGroups': [
             {
               'Ref': 'ContainerlessSecurityGroup'
@@ -294,47 +310,3 @@ export class Cluster implements Resource {
   }
 
 }
-
-
-
-//     'AutoscalingRole': {
-//       'Properties': {
-//         'AssumeRolePolicyDocument': {
-//           'Statement': [
-//             {
-//               'Action': [
-//                 'sts:AssumeRole'
-//               ],
-//               'Effect': 'Allow',
-//               'Principal': {
-//                 'Service': [
-//                   'application-autoscaling.amazonaws.com'
-//                 ]
-//               }
-//             }
-//           ]
-//         },
-//         'Path': '/',
-//         'Policies': [
-//           {
-//             'PolicyDocument': {
-//               'Statement': [
-//                 {
-//                   'Action': [
-//                     'application-autoscaling:*',
-//                     'cloudwatch:DescribeAlarms',
-//                     'cloudwatch:PutMetricAlarm',
-//                     'ecs:DescribeServices',
-//                     'ecs:UpdateService'
-//                   ],
-//                   'Effect': 'Allow',
-//                   'Resource': '*'
-//                 }
-//               ]
-//             },
-//             'PolicyName': 'ecs-service-autoscaling'
-//           }
-//         ]
-//       },
-//       'Type': 'AWS::IAM::Role'
-//     },

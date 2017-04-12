@@ -6,11 +6,17 @@ export declare class Cluster implements Resource {
     private _id;
     private _securityGroup;
     private capacity;
+    private certificate;
     private instance_type;
+    private key_name;
+    private max_size;
+    private min_size;
     private region;
     private size;
     constructor(opts: any);
     requireVpcId(): void;
+    requireKey(): void;
+    requireCertificate(): void;
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
@@ -47,7 +53,7 @@ export declare class Cluster implements Resource {
                     'Ref': string;
                 };
                 'MaxSize': number;
-                'MinSize': string;
+                'MinSize': number;
                 'VPCZoneIdentifier': string;
             };
         };
