@@ -13,9 +13,9 @@ export class Cluster implements Resource {
     'eu-west-1': 'ami-95f8d2f3',
     'eu-west-2': 'ami-bf9481db',
     'eu-central-1': 'ami-085e8a67',
-    'ap-northeast-1': 'ami-f63f6f91ce',
-    'ap-southeast-1': 'ami-b4ae1dd7ce',
-    'ap-southeast-2': 'ami-fbe9eb98ce',
+    'ap-northeast-1': 'ami-f63f6f91',
+    'ap-southeast-1': 'ami-b4ae1dd7',
+    'ap-southeast-2': 'ami-fbe9eb98',
     'ca-central-1': 'ami-ee58e58a'
   }
 
