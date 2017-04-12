@@ -68,7 +68,7 @@ class ServerlecsPlugin {
   dockerBuildAndPush(app: {image: string, path: string}) {
     this.dockerBuild(app.path, app.image);
     this.dockerPush(app.image);
-    this.serverless.cli.log(`Built with tag: ${tag}`);
+    this.serverless.cli.log(`Built with tag: ${this.tag}`);
   }
 
   dockerPush(tag: string) {
