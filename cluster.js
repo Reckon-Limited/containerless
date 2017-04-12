@@ -31,16 +31,18 @@ var Cluster = (function () {
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
         this.subnets = opts.subnets || this.requireSubnets();
-        this.subnets = opts.subnets || this.requireSubnets();
+        this.protocol = opts.protocol || 'HTTP';
+        this.port = opts.port || this.setPort();
+        this.certificate = opts.certificate;
+        if (!this.certificate && this.protocol == 'HTTPS') {
+            this.requireCertificate();
+        }
     }
     Cluster.prototype.requireVpcId = function () {
         throw new TypeError('Cluster requires a VPC Id');
     };
-    Cluster.prototype.requireKey = function () {
-        throw new TypeError('Cluster requires a Key Name');
-    };
     Cluster.prototype.requireCertificate = function () {
-        throw new TypeError('Cluster requires a Certificate ARN');
+        throw new TypeError('Cluster requires a Certificate ARN for HTTPS');
     };
     Cluster.prototype.requireSubnets = function () {
         throw new TypeError('Cluster requires at least one Subnet Id');
@@ -50,6 +52,9 @@ var Cluster = (function () {
     };
     Cluster.prototype.ami = function () {
         return this.amiIds[this.region];
+    };
+    Cluster.prototype.setPort = function () {
+        return (this.protocol == 'HTTPS') ? 443 : 80;
     };
     Object.defineProperty(Cluster.prototype, "name", {
         get: function () {

@@ -43,7 +43,7 @@ describe('with existing cluster', function () {
         mocha_typescript_1.suite
     ], ClusterTest);
 });
-describe('create a new cluster', function () {
+describe('create a new cluster with HTTPS', function () {
     var ClusterTest = (function () {
         function ClusterTest() {
             this.opts = {
@@ -52,7 +52,9 @@ describe('create a new cluster', function () {
                     'subnet-12359e64',
                     'subnet-b442c0d0',
                     'subnet-a2b967fb'
-                ]
+                ],
+                protocol: 'HTTPS',
+                certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
             };
         }
         ClusterTest.prototype.before = function () {
@@ -64,6 +66,12 @@ describe('create a new cluster', function () {
         ClusterTest.prototype.resources_not_empty = function () {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
         };
+        ClusterTest.prototype.sets_protocol = function () {
+            chai_1.expect(this.cluster.protocol).to.eql('HTTPS');
+        };
+        ClusterTest.prototype.sets_port = function () {
+            chai_1.expect(this.cluster.port).to.eql(443);
+        };
         return ClusterTest;
     }());
     __decorate([
@@ -72,27 +80,59 @@ describe('create a new cluster', function () {
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "resources_not_empty", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "sets_protocol", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "sets_port", null);
     ClusterTest = __decorate([
         mocha_typescript_1.suite
     ], ClusterTest);
 });
-// cluster:
-//   instance_type: t2.small
-//   subnets:
-//     - subnet-12359e64
-//     - subnet-b442c0d0
-//     - subnet-a2b967fb
-// repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
-// vpcId:
-//   Fn::ImportValue: triple-az-vpc-VpcID
-// applications:
-//   hello-1:
-//     srcPath: src-1
-//     urlPath: /
-//     port: 3000
-//     memory: 128
-//   hello-2:
-//     srcPath: src-2
-//     urlPath: /hello
-//     port: 3000
-//     memory: 128
+describe('create a new cluster with HTTP', function () {
+    var ClusterTest = (function () {
+        function ClusterTest() {
+            this.opts = {
+                vpcId: 'vpc-1',
+                subnets: [
+                    'subnet-12359e64',
+                    'subnet-b442c0d0',
+                    'subnet-a2b967fb'
+                ],
+                protocol: 'HTTP'
+            };
+        }
+        ClusterTest.prototype.before = function () {
+            this.cluster = new cluster_1.Cluster(this.opts);
+        };
+        ClusterTest.prototype.id = function () {
+            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ContainerlessCluster' });
+        };
+        ClusterTest.prototype.resources_not_empty = function () {
+            chai_1.expect(this.cluster.generate()).to.not.be.empty;
+        };
+        ClusterTest.prototype.sets_protocol = function () {
+            chai_1.expect(this.cluster.protocol).to.eql('HTTP');
+        };
+        ClusterTest.prototype.sets_port = function () {
+            chai_1.expect(this.cluster.port).to.eql(80);
+        };
+        return ClusterTest;
+    }());
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "id", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "resources_not_empty", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "sets_protocol", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "sets_port", null);
+    ClusterTest = __decorate([
+        mocha_typescript_1.suite
+    ], ClusterTest);
+});

@@ -38,7 +38,7 @@ describe('with existing cluster', () => {
   }
 });
 
-describe('create a new cluster', () => {
+describe('create a new cluster with HTTPS', () => {
   @suite class ClusterTest {
     opts = {
       vpcId: 'vpc-1',
@@ -46,7 +46,9 @@ describe('create a new cluster', () => {
         'subnet-12359e64',
         'subnet-b442c0d0',
         'subnet-a2b967fb'
-      ]
+      ],
+      protocol: 'HTTPS',
+      certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
     }
 
     cluster:Cluster
@@ -62,30 +64,49 @@ describe('create a new cluster', () => {
       expect(this.cluster.generate()).to.not.be.empty
     }
 
+    @test sets_protocol(){
+      expect(this.cluster.protocol).to.eql('HTTPS')
+    }
+
+    @test sets_port(){
+      expect(this.cluster.port).to.eql(443)
+    }
+
   }
 });
 
 
+describe('create a new cluster with HTTP', () => {
+  @suite class ClusterTest {
+    opts = {
+      vpcId: 'vpc-1',
+      subnets: [
+        'subnet-12359e64',
+        'subnet-b442c0d0',
+        'subnet-a2b967fb'
+      ],
+      protocol: 'HTTP'
+    }
 
+    cluster:Cluster
+    before() {
+      this.cluster = new Cluster(this.opts);
+    }
 
+    @test id() {
+      expect(this.cluster.id).to.eql({'Ref': 'ContainerlessCluster'})
+    }
 
-// cluster:
-//   instance_type: t2.small
-//   subnets:
-//     - subnet-12359e64
-//     - subnet-b442c0d0
-//     - subnet-a2b967fb
-// repository: 005213230316.dkr.ecr.ap-southeast-2.amazonaws.com/serverlecs
-// vpcId:
-//   Fn::ImportValue: triple-az-vpc-VpcID
-// applications:
-//   hello-1:
-//     srcPath: src-1
-//     urlPath: /
-//     port: 3000
-//     memory: 128
-//   hello-2:
-//     srcPath: src-2
-//     urlPath: /hello
-//     port: 3000
-//     memory: 128
+    @test resources_not_empty(){
+      expect(this.cluster.generate()).to.not.be.empty
+    }
+
+    @test sets_protocol(){
+      expect(this.cluster.protocol).to.eql('HTTP')
+    }
+
+    @test sets_port(){
+      expect(this.cluster.port).to.eql(80)
+    }
+  }
+});

@@ -11,7 +11,7 @@ var ELB = (function () {
         configurable: true
     });
     ELB.prototype.generate = function () {
-        return {
+        var definition = {
             'ContainerlessELB': {
                 'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
                 'Properties': {
@@ -30,6 +30,7 @@ var ELB = (function () {
                 'Type': 'AWS::ElasticLoadBalancingV2::Listener',
                 "DependsOn": 'ContainerlessELB',
                 'Properties': {
+                    'Certificates': [],
                     'DefaultActions': [
                         {
                             'Type': 'forward',
@@ -41,20 +42,24 @@ var ELB = (function () {
                     'LoadBalancerArn': {
                         'Ref': 'ContainerlessELB'
                     },
-                    'Port': '80',
-                    'Protocol': 'HTTP'
+                    'Port': this.cluster.port,
+                    'Protocol': this.cluster.protocol
                 }
             },
             'ContainerlessDefaultTargetGroup': {
                 'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
                 'DependsOn': 'ContainerlessELB',
                 'Properties': {
-                    'Port': 80,
-                    'Protocol': 'HTTP',
+                    'Port': this.cluster.port,
+                    'Protocol': this.cluster.protocol,
                     'VpcId': this.cluster.vpcId
                 }
             }
         };
+        if (this.cluster.certificate) {
+            definition.ContainerlessListener.Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
+        }
+        return definition;
     };
     return ELB;
 }());

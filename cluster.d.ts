@@ -3,10 +3,12 @@ export declare class Cluster implements Resource {
     amiIds: any;
     subnets: string;
     vpcId: string;
+    certificate: string;
+    protocol: string;
+    port: number;
     private _id;
     private _securityGroup;
     private capacity;
-    private certificate;
     private instance_type;
     private key_name;
     private max_size;
@@ -15,11 +17,11 @@ export declare class Cluster implements Resource {
     private size;
     constructor(opts: any);
     requireVpcId(): void;
-    requireKey(): void;
     requireCertificate(): void;
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
+    setPort(): 443 | 80;
     readonly name: string;
     readonly id: string | {
         'Ref': string;

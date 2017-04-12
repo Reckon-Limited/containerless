@@ -21,12 +21,14 @@ export class Cluster implements Resource {
 
   public subnets: string
   public vpcId: string
+  public certificate: string
+  public protocol: string
+  public port: number
 
   private _id: string
   private _securityGroup: string
 
   private capacity: number
-  private certificate: string
   private instance_type: string
   private key_name: string
   private max_size: number
@@ -50,19 +52,22 @@ export class Cluster implements Resource {
     // we always need a vpc and at least one subnet
     this.vpcId = opts.vpcId || this.requireVpcId()
     this.subnets = opts.subnets || this.requireSubnets()
-    this.subnets = opts.subnets || this.requireSubnets()
+
+    this.protocol = opts.protocol || 'HTTP'
+    this.port = opts.port || this.setPort()
+    this.certificate = opts.certificate
+
+    if (!this.certificate && this.protocol == 'HTTPS') {
+      this.requireCertificate()
+    }
   }
 
   requireVpcId() {
     throw new TypeError('Cluster requires a VPC Id');
   }
 
-  requireKey() {
-    throw new TypeError('Cluster requires a Key Name');
-  }
-
   requireCertificate() {
-    throw new TypeError('Cluster requires a Certificate ARN');
+    throw new TypeError('Cluster requires a Certificate ARN for HTTPS');
   }
 
   requireSubnets() {
@@ -75,6 +80,10 @@ export class Cluster implements Resource {
 
   ami() {
     return this.amiIds[this.region];
+  }
+
+  setPort() {
+    return (this.protocol == 'HTTPS') ? 443 : 80
   }
 
   get name() {
