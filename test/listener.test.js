@@ -23,6 +23,7 @@ describe('service with port and url', function () {
                 ]
             };
             this.opts = {
+                service: 'blah-vtha-dev',
                 name: 'app-1',
                 repository: 'blah/vtha',
                 tag: 'tag-1',
@@ -38,11 +39,11 @@ describe('service with port and url', function () {
             this.resources = this.listener.generate();
         };
         ListenerTest.prototype.listener_resource = function () {
-            var result = _.get(this.resources, 'App1ListenerRule.Type');
+            var result = _.get(this.resources, 'BlahVthaDevApp1ListenerRule.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::ListenerRule');
         };
         ListenerTest.prototype.task_definition_resource_type = function () {
-            var result = _.get(this.resources, 'App1TargetGroup.Type');
+            var result = _.get(this.resources, 'BlahVthaDevApp1TargetGroup.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
         };
         ListenerTest.prototype.priority = function () {
@@ -77,6 +78,7 @@ describe('service does not require load balancing', function () {
                 ]
             };
             this.opts = {
+                service: 'blah-vtha-dev',
                 name: 'app-1',
                 repository: 'blah/vtha',
                 tag: 'tag-1',

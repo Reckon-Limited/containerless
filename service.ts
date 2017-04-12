@@ -10,6 +10,7 @@ export class Service implements Resource {
   public url: string
 
   private _name: string
+  private _service: string
 
   private cluster: Cluster
   private count: number
@@ -23,6 +24,7 @@ export class Service implements Resource {
   constructor(cluster: Cluster, opts: any) {
     this.cluster = cluster;
 
+    this._service = opts.service;
     this._name = opts.name;
     this.tag = opts.tag || this.requireTag();
     this.repository = opts.repository || this.requireRepository();
@@ -73,7 +75,7 @@ export class Service implements Resource {
   }
 
   get name() {
-    return _.upperFirst(_.camelCase(this._name));
+    return _.chain(`${this._service}-${this._name}`).camelCase().upperFirst().value();
   }
 
   generate() {

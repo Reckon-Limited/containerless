@@ -24,6 +24,7 @@ describe('with an existing cluster and a load balanced container', function () {
                 ]
             };
             this.opts = {
+                service: 'blah-vtha-dev',
                 name: 'app-1',
                 repository: 'blah/vtha',
                 tag: 'tag-1',
@@ -40,30 +41,30 @@ describe('with an existing cluster and a load balanced container', function () {
             this.resources = this.service.generate();
         };
         ServiceTest.prototype.service_name = function () {
-            chai_1.expect(this.service.name).to.eql('App1');
+            chai_1.expect(this.service.name).to.eql('BlahVthaDevApp1');
         };
         ServiceTest.prototype.service_resource = function () {
-            var result = _.get(this.resources, 'App1.Type');
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Type');
             chai_1.expect(result).to.eql('AWS::ECS::Service');
         };
         ServiceTest.prototype.task_definition_resource_type = function () {
-            var result = _.get(this.resources, 'App1TaskDefinition.Type');
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Type');
             chai_1.expect(result).to.eql('AWS::ECS::TaskDefinition');
         };
         ServiceTest.prototype.task_definition_resource = function () {
-            var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Name');
-            chai_1.expect(result).to.eql('App1');
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Name');
+            chai_1.expect(result).to.eql('BlahVthaDevApp1');
         };
         ServiceTest.prototype.environment_variables = function () {
-            var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
             chai_1.expect(result).to.eql([{ name: 'blah', value: 'vtha' }]);
         };
         ServiceTest.prototype.service_role = function () {
-            var result = _.get(this.resources, 'App1.Properties.Role.Ref');
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
             chai_1.expect(result).to.eql('ContainerlessELBRole');
         };
         ServiceTest.prototype.service_load_balancers = function () {
-            var result = _.get(this.resources, 'App1.Properties.LoadBalancers');
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
             chai_1.expect(result).to.not.be.empty;
         };
         return ServiceTest;
@@ -105,6 +106,7 @@ describe('new cluster and container without load balancer', function () {
                 ]
             };
             this.opts = {
+                service: 'blah-vtha-dev',
                 name: 'app-1',
                 repository: 'blah/vtha',
                 tag: 'tag-1',
@@ -116,18 +118,18 @@ describe('new cluster and container without load balancer', function () {
             this.resources = this.service.generate();
         };
         ServiceTest.prototype.service_name = function () {
-            chai_1.expect(this.service.name).to.eql('App1');
+            chai_1.expect(this.service.name).to.eql('BlahVthaDevApp1');
         };
         ServiceTest.prototype.service_load_balancers = function () {
-            var result = _.get(this.resources, 'App1.Properties.LoadBalancers');
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
             chai_1.expect(result).to.be.empty;
         };
         ServiceTest.prototype.service_role_undefined = function () {
-            var result = _.get(this.resources, 'App1.Properties.Role');
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role');
             chai_1.expect(result).to.be.undefined;
         };
         ServiceTest.prototype.environment_variables = function () {
-            var result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
             chai_1.expect(result).to.be.empty;
         };
         return ServiceTest;

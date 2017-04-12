@@ -24,6 +24,7 @@ describe('with an existing cluster and a load balanced container', () => {
     }
 
     opts = {
+      service: 'blah-vtha-dev',
       name: 'app-1',
       repository: 'blah/vtha',
       tag: 'tag-1',
@@ -44,36 +45,36 @@ describe('with an existing cluster and a load balanced container', () => {
     }
 
     @test service_name(){
-      expect(this.service.name).to.eql('App1')
+      expect(this.service.name).to.eql('BlahVthaDevApp1')
     }
 
     @test service_resource(){
-      let result = _.get(this.resources, 'App1.Type');
+      let result = _.get(this.resources, 'BlahVthaDevApp1.Type');
       expect(result).to.eql('AWS::ECS::Service');
     }
 
     @test task_definition_resource_type(){
-      let result = _.get(this.resources, 'App1TaskDefinition.Type');
+      let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Type');
       expect(result).to.eql('AWS::ECS::TaskDefinition');
     }
 
     @test task_definition_resource(){
-      let result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Name');
-      expect(result).to.eql('App1');
+      let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Name');
+      expect(result).to.eql('BlahVthaDevApp1');
     }
 
     @test environment_variables(){
-      let result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+      let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
       expect(result).to.eql([{name: 'blah', value: 'vtha'}]);
     }
 
     @test service_role(){
-      let result = _.get(this.resources, 'App1.Properties.Role.Ref');
+      let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
       expect(result).to.eql('ContainerlessELBRole');
     }
 
     @test service_load_balancers(){
-      let result = _.get(this.resources, 'App1.Properties.LoadBalancers');
+      let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
       expect(result).to.not.be.empty;
     }
   }
@@ -91,6 +92,7 @@ describe('new cluster and container without load balancer', () => {
     }
 
     opts = {
+      service: 'blah-vtha-dev',
       name: 'app-1',
       repository: 'blah/vtha',
       tag: 'tag-1',
@@ -106,21 +108,21 @@ describe('new cluster and container without load balancer', () => {
     }
 
     @test service_name(){
-      expect(this.service.name).to.eql('App1')
+      expect(this.service.name).to.eql('BlahVthaDevApp1')
     }
 
     @test service_load_balancers(){
-      let result = _.get(this.resources, 'App1.Properties.LoadBalancers');
+      let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
       expect(result).to.be.empty;
     }
 
     @test service_role_undefined(){
-      let result = _.get(this.resources, 'App1.Properties.Role');
+      let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role');
       expect(result).to.be.undefined;
     }
 
     @test environment_variables(){
-      let result = _.get(this.resources, 'App1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+      let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
       expect(result).to.be.empty;
     }
 

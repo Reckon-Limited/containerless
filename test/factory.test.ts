@@ -19,6 +19,7 @@ describe('', () => {
 
     opts = {
       repository: 'blah/vtha',
+      service: 'blah-vtha-dev',
       cluster: {
         id: 'arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N',
         security_group: 'sg-abcdef',
@@ -58,7 +59,7 @@ describe('', () => {
 
     @test service_name(){
       let service = this.resources[0];
-      expect(service.name).to.eq('App1')      
+      expect(service.name).to.eq('BlahVthaDevApp1')
     }
 
     @test has_cluster(){

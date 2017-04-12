@@ -14,6 +14,7 @@ describe('', function () {
             this.tag = 'tag-123abc';
             this.opts = {
                 repository: 'blah/vtha',
+                service: 'blah-vtha-dev',
                 cluster: {
                     id: 'arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N',
                     security_group: 'sg-abcdef',
@@ -47,7 +48,7 @@ describe('', function () {
         };
         FactoryTest.prototype.service_name = function () {
             var service = this.resources[0];
-            chai_1.expect(service.name).to.eq('App1');
+            chai_1.expect(service.name).to.eq('BlahVthaDevApp1');
         };
         FactoryTest.prototype.has_cluster = function () {
             var cluster = this.resources[1];

@@ -7,6 +7,7 @@ export interface CLI {
 export interface Service {
     custom: any;
     provider: any;
+    service: string;
 }
 export interface Input {
     options: any;

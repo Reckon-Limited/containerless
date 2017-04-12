@@ -22,6 +22,7 @@ describe('service with port and url', () => {
     }
 
     opts = {
+      service: 'blah-vtha-dev',
       name: 'app-1',
       repository: 'blah/vtha',
       tag: 'tag-1',
@@ -44,12 +45,12 @@ describe('service with port and url', () => {
     }
 
     @test listener_resource(){
-      let result = _.get(this.resources, 'App1ListenerRule.Type');
+      let result = _.get(this.resources, 'BlahVthaDevApp1ListenerRule.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::ListenerRule');
     }
 
     @test task_definition_resource_type(){
-      let result = _.get(this.resources, 'App1TargetGroup.Type');
+      let result = _.get(this.resources, 'BlahVthaDevApp1TargetGroup.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
     }
 
@@ -76,6 +77,7 @@ describe('service does not require load balancing', () => {
     }
 
     opts = {
+      service: 'blah-vtha-dev',
       name: 'app-1',
       repository: 'blah/vtha',
       tag: 'tag-1',

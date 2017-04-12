@@ -43,7 +43,6 @@ class ServerlecsPlugin {
     let Resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
 
     let resources = prepare(this.tag, this.opts)
-
     _.each(resources, (resource) => {
       this.serverless.cli.log(`Building resources for ${resource.name}`);
       _.merge(Resources, resource.generate());
@@ -108,7 +107,7 @@ class ServerlecsPlugin {
 
   getOptions() {
     if (this.hasOptions) {
-      return _.merge({}, this.serverless.service.custom.containerless);
+      return _.merge({service: this.serverless.service.service}, this.serverless.service.custom.containerless);
     }
   }
 

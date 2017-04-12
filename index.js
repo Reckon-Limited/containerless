@@ -76,7 +76,7 @@ var ServerlecsPlugin = (function () {
     };
     ServerlecsPlugin.prototype.getOptions = function () {
         if (this.hasOptions) {
-            return _.merge({}, this.serverless.service.custom.containerless);
+            return _.merge({ service: this.serverless.service.service }, this.serverless.service.custom.containerless);
         }
     };
     ServerlecsPlugin.prototype.hasOptions = function () {

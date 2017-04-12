@@ -29,6 +29,7 @@ var Service = (function () {
             return [definition];
         };
         this.cluster = cluster;
+        this._service = opts.service;
         this._name = opts.name;
         this.tag = opts.tag || this.requireTag();
         this.repository = opts.repository || this.requireRepository();
@@ -82,7 +83,7 @@ var Service = (function () {
     });
     Object.defineProperty(Service.prototype, "name", {
         get: function () {
-            return _.upperFirst(_.camelCase(this._name));
+            return _.chain(this._service + "-" + this._name).camelCase().upperFirst().value();
         },
         enumerable: true,
         configurable: true

@@ -4,6 +4,7 @@ export declare class Service implements Resource {
     port: number;
     url: string;
     private _name;
+    private _service;
     private cluster;
     private count;
     private environment;

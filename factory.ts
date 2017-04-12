@@ -10,7 +10,7 @@ export function prepare(tag:string, opts:any): Array<Resource> {
   let elb = new ELB(cluster);
 
   let applications = _.map(opts.applications, (app:any, name: string) => {
-    let o = _.merge({}, { name: name, path: opts.path, repository: opts.repository, tag: tag}, app);
+    let o = _.merge({}, { service: opts.service, name: name, path: opts.path, repository: opts.repository, tag: tag}, app);
     return new Service(cluster, o);
   });
 
