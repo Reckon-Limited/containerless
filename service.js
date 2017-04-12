@@ -39,8 +39,7 @@ var Service = (function () {
         this.memory = opts.memory || 128;
         this.logGroupRetention = opts.log_group_retention || 7;
         this.environment = _.map(opts.environment, function (o) {
-            var ary = _.chain(o).toPairs().flatten().value();
-            var k = ary[0], v = ary[1];
+            var _a = _.chain(o).toPairs().flatten().value(), k = _a[0], v = _a[1];
             return { name: k, value: v };
         });
         this.port = opts.port;

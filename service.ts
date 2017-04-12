@@ -31,8 +31,7 @@ export class Service implements Resource {
     this.memory = opts.memory || 128;
     this.logGroupRetention = opts.log_group_retention || 7;
     this.environment = _.map(opts.environment, (o) => {
-      let ary = _.chain(o).toPairs().flatten().value();
-      let [k, v] = ary;
+      let [k, v] = _.chain(o).toPairs().flatten().value();
       return {name: k, value: v}
     })
 
