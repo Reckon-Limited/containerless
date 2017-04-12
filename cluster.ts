@@ -5,17 +5,17 @@ import { Resource } from './resource'
 export class Cluster implements Resource {
 
   amiIds:any = {
-    'ap-northeast-1': 'ami-30bdce57',
-    'ap-southeast-1': 'ami-9f75ddfc',
-    'ap-southeast-2': 'ami-cf393cac',
-    'ca-central-1': 'ami-1b01b37f',
-    'eu-central-1': 'ami-38dc1157',
-    'eu-west-1': 'ami-e3fbd290',
-    'eu-west-2': 'ami-77f6fc13',
-    'us-east-1': 'ami-a58760b3',
-    'us-east-2': 'ami-a6e4bec3',
-    'us-west-1': 'ami-74cb9b14',
-    'us-west-2': 'ami-5b6dde3b'
+    'us-east-1': 'ami-275ffe31',
+    'us-east-2': 'ami-62745007',
+    'us-west-1': 'ami-689bc208',
+    'us-west-2': 'ami-62d35c02',
+    'eu-west-1': 'ami-95f8d2f3',
+    'eu-west-2': 'ami-bf9481db',
+    'eu-central-1': 'ami-085e8a67',
+    'ap-northeast-1': 'ami-f63f6f91ce',
+    'ap-southeast-1': 'ami-b4ae1dd7ce',
+    'ap-southeast-2': 'ami-fbe9eb98ce',
+    'ca-central-1': 'ami-ee58e58a'
   }
     
   public subnets: string
