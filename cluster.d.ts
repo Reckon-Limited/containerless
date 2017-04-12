@@ -34,8 +34,11 @@ export declare class Cluster implements Resource {
             };
             'UpdatePolicy': {
                 'AutoScalingReplacingUpdate': {
-                    'PauseTime': string;
                     'WillReplace': string;
+                };
+                'AutoScalingRollingUpdate': {
+                    'MinInstancesInService': number;
+                    'MaxBatchSize': number;
                 };
             };
             'Properties': {
