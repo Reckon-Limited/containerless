@@ -22,7 +22,7 @@ var Cluster = (function () {
         else {
             this.capacity = opts.capacity || 1;
             this.instance_type = opts.instance_type || 't2.micro';
-            this.key_name = opts.key_name || 'ecs-instance-key';
+            this.key_name = opts.key_name || 'ecs-instance';
             this.region = opts.region || 'ap-southeast-2';
             this.size = opts.size || 1;
             this.max_size = opts.max_size || this.size + 1;
