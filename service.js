@@ -26,6 +26,9 @@ var Service = (function () {
                     }
                 }
             };
+            if (_this.port) {
+                definition['PortMappings'] = [{ 'ContainerPort': _this.port }];
+            }
             return [definition];
         };
         this.cluster = cluster;

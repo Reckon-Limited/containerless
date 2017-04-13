@@ -59,6 +59,10 @@ describe('with an existing cluster and a load balanced container', function () {
             var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
             chai_1.expect(result).to.eql([{ name: 'blah', value: 'vtha' }]);
         };
+        ServiceTest.prototype.port_mappings = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].PortMappings');
+            chai_1.expect(result).to.eql([{ 'ContainerPort': 1111 }]);
+        };
         ServiceTest.prototype.service_role = function () {
             var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
             chai_1.expect(result).to.eql('ContainerlessELBRole');
@@ -84,6 +88,9 @@ describe('with an existing cluster and a load balanced container', function () {
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "environment_variables", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "port_mappings", null);
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_role", null);

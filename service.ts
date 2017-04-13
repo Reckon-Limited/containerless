@@ -143,6 +143,9 @@ export class Service implements Resource {
       }
     }
 
+    if (this.port) {
+      definition['PortMappings'] = [{ 'ContainerPort': this.port }]
+    }
 
     return [definition]
   }

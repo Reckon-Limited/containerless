@@ -68,6 +68,11 @@ describe('with an existing cluster and a load balanced container', () => {
       expect(result).to.eql([{name: 'blah', value: 'vtha'}]);
     }
 
+    @test port_mappings(){
+      let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].PortMappings');
+      expect(result).to.eql([{'ContainerPort': 1111 }]);
+    }
+
     @test service_role(){
       let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
       expect(result).to.eql('ContainerlessELBRole');
