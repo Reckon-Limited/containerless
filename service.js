@@ -41,7 +41,7 @@ var Service = (function () {
         this.logGroupRetention = opts.log_group_retention || 7;
         this.environment = _.map(opts.environment, function (o) {
             var _a = _.chain(o).toPairs().flatten().value(), k = _a[0], v = _a[1];
-            return { name: k, value: v };
+            return { Name: k, Value: v };
         });
         this.port = opts.port;
         this.url = opts.url;
