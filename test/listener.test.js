@@ -41,11 +41,11 @@ describe('service with port and url', () => {
             this.resources = this.listener.generate();
         }
         listener_resource() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1HTTPRule.Type');
+            let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPRule.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::ListenerRule');
         }
         task_definition_resource_type() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1Target.Type');
+            let result = _.get(this.resources[0], 'BlahVthaDevApp1Target.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
         }
         priority() {
