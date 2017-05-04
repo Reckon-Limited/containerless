@@ -27,6 +27,7 @@ var Cluster = (function () {
             this.size = opts.size || 1;
             this.max_size = opts.max_size || this.size + 1;
             this.min_size = opts.min_size || 1;
+            this.max_memory_threshold = opts.max_memory_threshold || 80;
         }
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
@@ -98,32 +99,6 @@ var Cluster = (function () {
         if (this._id)
             return {};
         return {
-            'AutoScalingGroup': {
-                'Type': 'AWS::AutoScaling::AutoScalingGroup',
-                'CreationPolicy': {
-                    'ResourceSignal': {
-                        'Timeout': 'PT5M'
-                    }
-                },
-                'UpdatePolicy': {
-                    'AutoScalingReplacingUpdate': {
-                        'WillReplace': 'true'
-                    },
-                    'AutoScalingRollingUpdate': {
-                        'MinInstancesInService': 1,
-                        'MaxBatchSize': 1
-                    }
-                },
-                'Properties': {
-                    'DesiredCapacity': this.capacity,
-                    'LaunchConfigurationName': {
-                        'Ref': 'ContainerlessLaunchConfiguration'
-                    },
-                    'MaxSize': this.max_size,
-                    'MinSize': this.min_size,
-                    'VPCZoneIdentifier': this.subnets
-                }
-            },
             'ContainerlessInstanceProfile': {
                 'Type': 'AWS::IAM::InstanceProfile',
                 'Properties': {
@@ -155,7 +130,7 @@ var Cluster = (function () {
                     ],
                     'UserData': {
                         'Fn::Base64': {
-                            'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n\n#!/bin/bash -xe\necho ECS_CLUSTER=${ContainerlessCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ECSAutoScalingLaunchConfig --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n'
+                            'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\necho ECS_CLUSTER=${ContainerlessCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource ContainerlessAutoScalingGroup --region ${AWS::Region}\n'
                         }
                     }
                 }
@@ -295,6 +270,69 @@ var Cluster = (function () {
                             }
                         }
                     ]
+                }
+            },
+            'ContainerlessAutoScalingGroup': {
+                'Type': 'AWS::AutoScaling::AutoScalingGroup',
+                'CreationPolicy': {
+                    'ResourceSignal': {
+                        'Timeout': 'PT5M'
+                    }
+                },
+                'UpdatePolicy': {
+                    'AutoScalingReplacingUpdate': {
+                        'WillReplace': 'true'
+                    },
+                    'AutoScalingRollingUpdate': {
+                        'MinInstancesInService': 1,
+                        'MaxBatchSize': 1,
+                        'PauseTime': 'PT15M',
+                        'WaitOnResourceSignals': 'true'
+                    }
+                },
+                'Properties': {
+                    'DesiredCapacity': this.capacity,
+                    'LaunchConfigurationName': {
+                        'Ref': 'ContainerlessLaunchConfiguration'
+                    },
+                    'MaxSize': this.max_size,
+                    'MinSize': this.min_size,
+                    'VPCZoneIdentifier': this.subnets
+                }
+            },
+            'MemoryReservationScaleUpPolicy': {
+                'Type': 'AWS::AutoScaling::ScalingPolicy',
+                'Properties': {
+                    'AdjustmentType': 'PercentChangeInCapacity',
+                    'AutoScalingGroupName': {
+                        'Ref': 'ContainerlessAutoScalingGroup'
+                    },
+                    'Cooldown': '300',
+                    'ScalingAdjustment': '30'
+                }
+            },
+            'MemoryReservationHighAlert': {
+                'Type': 'AWS::CloudWatch::Alarm',
+                'Properties': {
+                    'EvaluationPeriods': '1',
+                    'Statistic': 'Maximum',
+                    'Threshold': this.max_memory_threshold,
+                    'AlarmDescription': 'Alarm if CPU too high or metric disappears indicating instance is down',
+                    'Period': '60',
+                    'AlarmActions': [
+                        { 'Ref': 'MemoryReservationScaleUpPolicy' }
+                    ],
+                    'Namespace': 'AWS/ECS',
+                    'Dimensions': [
+                        {
+                            'Name': 'ClusterName',
+                            'Value': {
+                                'Ref': 'ContainerlessCluster'
+                            }
+                        }
+                    ],
+                    'ComparisonOperator': 'GreaterThanThreshold',
+                    'MetricName': 'MemoryReservation'
                 }
             }
         };
