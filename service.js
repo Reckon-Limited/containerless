@@ -69,6 +69,9 @@ class Service {
     get taskDefinitionName() {
         return `${this.name}TaskDefinition`;
     }
+    get scalingTargetName() {
+        return `${this.name}ScalingTarget`;
+    }
     get logGroupName() {
         return `${this.name}CloudwatchLogGroup`;
     }
@@ -103,6 +106,32 @@ class Service {
                         'Fn::Sub': `${this.name}-\${AWS::StackName}`
                     },
                     'RetentionInDays': this.logGroupRetention
+                }
+            },
+            [this.scalingTargetName]: {
+                'Type': 'AWS::ApplicationAutoScaling::ScalableTarget',
+                'DependsOn': this.name,
+                'Properties': {
+                    'MaxCapacity': 2,
+                    'MinCapacity': 1,
+                    'ScalableDimension': 'ecs:service:DesiredCount',
+                    'ServiceNamespace': 'ecs',
+                    'ResourceId': {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "service/",
+                                {
+                                    "Ref": "ContainerlessCluster"
+                                },
+                                "/",
+                                this.name
+                            ]
+                        ]
+                    },
+                    'RoleARN': {
+                        'Fn::GetAtt': ['ContainerlessASGRole', 'Arn']
+                    }
                 }
             }
         };

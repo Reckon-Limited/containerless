@@ -20,6 +20,7 @@ export declare class Service implements Resource {
     requireURL(): void;
     readonly image: string;
     readonly taskDefinitionName: string;
+    readonly scalingTargetName: string;
     readonly logGroupName: string;
     readonly name: string;
     generate(): any;
