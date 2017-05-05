@@ -130,7 +130,7 @@ class Service {
                             '',
                             [
                                 'service/',
-                                { 'Ref': 'ContainerlessCluster' },
+                                { 'Ref': 'ClsCluster' },
                                 '/',
                                 { 'Fn::GetAtt': [this.name, 'Name'] }
                             ]

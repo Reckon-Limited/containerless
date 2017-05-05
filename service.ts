@@ -143,7 +143,7 @@ export class Service implements Resource {
                '',
                [
                  'service/',
-                 { 'Ref': 'ContainerlessCluster' },
+                 { 'Ref': 'ClsCluster' },
                  '/',
                  { 'Fn::GetAtt': [this.name, 'Name'] }
                ]
