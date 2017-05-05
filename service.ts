@@ -1,4 +1,4 @@
-import _ = require('lodash');
+import * as _  from 'lodash';
 
 import { Cluster } from './cluster'
 import { Listener } from './listener'
@@ -17,9 +17,12 @@ export class Service implements Resource {
   private environment: Array<any>
   private listener: Listener
   private logGroupRetention: number
+  private max_size: number
   private memory: number
+  private min_size: number
   private repository: string
   private tag: string
+  private threshold: number
 
   constructor(cluster: Cluster, opts: any) {
     this.cluster = cluster;
@@ -29,9 +32,16 @@ export class Service implements Resource {
     this.tag = opts.tag || this.requireTag();
     this.repository = opts.repository || this.requireRepository();
 
-    this.count = opts.count || 1;
     this.memory = opts.memory || 128;
+
+    this.count = opts.count || 1;
+    this.min_size = opts.min_size || 1
+    this.max_size = opts.max_size || this.min_size + 1
+
+    this.threshold = opts.threshold || 10
+
     this.logGroupRetention = opts.log_group_retention || 7;
+
     this.environment = _.map(opts.environment, (o) => {
       let [k, v] = _.chain(o).toPairs().flatten().value();
       return { Name: k, Value: v }
@@ -124,26 +134,22 @@ export class Service implements Resource {
         'Type': 'AWS::ApplicationAutoScaling::ScalableTarget',
         'DependsOn': this.name,
         'Properties': {
-          'MaxCapacity': 2,
-          'MinCapacity': 1,
+          'MaxCapacity': this.max_size,
+          'MinCapacity': this.min_size,
           'ScalableDimension': 'ecs:service:DesiredCount',
           'ServiceNamespace': 'ecs',
           'ResourceId': {
-            "Fn::Join":[
-               "",
+            'Fn::Join':[
+               '',
                [
-                 "service/",
-                 {
-                   "Ref":"ContainerlessCluster"
-                 },
-                 "/",
-                 this.name
+                 'service/',
+                 { 'Ref': 'ContainerlessCluster' },
+                 '/',
+                 { 'Fn::GetAtt': [this.name, 'Name'] }
                ]
              ]
           },
-          'RoleARN': {
-            'Fn::GetAtt': ['ContainerlessASGRole', 'Arn']
-          }
+          'RoleARN': { 'Fn::GetAtt': ['ContainerlessASGRole', 'Arn'] }
         }
       },
       [this.scalingPolicyName]: {
@@ -169,10 +175,10 @@ export class Service implements Resource {
       },
       [this.scalingAlarmName]: {
         'Type':'AWS::CloudWatch::Alarm',
-        'Properties':{
+        'Properties': {
           'EvaluationPeriods': '1',
           'Statistic': 'Average',
-          'Threshold': '10',
+          'Threshold': this.threshold,
           'AlarmDescription': 'ALB HTTP 500 Error Service Alarm',
           'Period': '60',
           'AlarmActions': [ { 'Ref': this.scalingPolicyName } ],

@@ -1,4 +1,4 @@
-import _ = require('lodash');
+import * as _  from 'lodash';
 
 import { Cluster } from './cluster'
 import { Resource } from './resource'
