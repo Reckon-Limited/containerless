@@ -214,6 +214,11 @@ export declare class Cluster implements Resource {
                 'MaxSize': number;
                 'MinSize': number;
                 'VPCZoneIdentifier': string;
+                'Tags': {
+                    'Key': string;
+                    'Value': string;
+                    'PropagateAtLaunch': boolean;
+                }[];
             };
         };
         'MemoryReservationScaleUpPolicy': {

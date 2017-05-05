@@ -328,7 +328,14 @@ class Cluster {
                     },
                     'MaxSize': this.max_size,
                     'MinSize': this.min_size,
-                    'VPCZoneIdentifier': this.subnets
+                    'VPCZoneIdentifier': this.subnets,
+                    'Tags': [
+                        {
+                            'Key': 'Origin',
+                            'Value': 'Containerless',
+                            'PropagateAtLaunch': true
+                        }
+                    ]
                 }
             },
             'MemoryReservationScaleUpPolicy': {

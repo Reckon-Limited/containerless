@@ -361,7 +361,14 @@ export class Cluster implements Resource {
           },
           'MaxSize': this.max_size,
           'MinSize': this.min_size,
-          'VPCZoneIdentifier': this.subnets
+          'VPCZoneIdentifier': this.subnets,
+          'Tags': [
+            {
+              'Key' : 'Origin',
+              'Value': 'Containerless',
+              'PropagateAtLaunch': true
+            }
+          ]
         }
       },
       'MemoryReservationScaleUpPolicy': {

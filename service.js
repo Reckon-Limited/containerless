@@ -69,11 +69,17 @@ class Service {
     get taskDefinitionName() {
         return `${this.name}TaskDefinition`;
     }
+    get logGroupName() {
+        return `${this.name}CloudwatchLogGroup`;
+    }
     get scalingTargetName() {
         return `${this.name}ScalingTarget`;
     }
-    get logGroupName() {
-        return `${this.name}CloudwatchLogGroup`;
+    get scalingPolicyName() {
+        return `${this.name}ScalingPolicy`;
+    }
+    get scalingAlarmName() {
+        return `${this.name}ALBAlarm`;
     }
     get name() {
         return _.chain(`${this._service}-${this._name}`).camelCase().upperFirst().value();
@@ -132,6 +138,49 @@ class Service {
                     'RoleARN': {
                         'Fn::GetAtt': ['ContainerlessASGRole', 'Arn']
                     }
+                }
+            },
+            [this.scalingPolicyName]: {
+                'Type': 'AWS::ApplicationAutoScaling::ScalingPolicy',
+                'Properties': {
+                    'PolicyName': 'ServiceStepPolicy',
+                    'PolicyType': 'StepScaling',
+                    'ScalingTargetId': {
+                        'Ref': this.scalingTargetName
+                    },
+                    'StepScalingPolicyConfiguration': {
+                        'AdjustmentType': 'PercentChangeInCapacity',
+                        'Cooldown': 60,
+                        'MetricAggregationType': 'Average',
+                        'StepAdjustments': [
+                            {
+                                'MetricIntervalLowerBound': 0,
+                                'ScalingAdjustment': 200
+                            }
+                        ]
+                    }
+                }
+            },
+            [this.scalingAlarmName]: {
+                'Type': 'AWS::CloudWatch::Alarm',
+                'Properties': {
+                    'EvaluationPeriods': '1',
+                    'Statistic': 'Average',
+                    'Threshold': '10',
+                    'AlarmDescription': 'ALB HTTP 500 Error Service Alarm',
+                    'Period': '60',
+                    'AlarmActions': [{ 'Ref': this.scalingPolicyName }],
+                    'Namespace': 'AWS/ApplicationELB',
+                    'Dimensions': [
+                        {
+                            'Name': 'ContainerlessService',
+                            'Value': {
+                                'Ref': this.name
+                            }
+                        }
+                    ],
+                    'ComparisonOperator': 'GreaterThanThreshold',
+                    'MetricName': 'HTTPCode_ELB_5XX_Count'
                 }
             }
         };
