@@ -4,8 +4,7 @@ export declare class Cluster implements Resource {
     subnets: string;
     vpcId: string;
     certificate: string;
-    protocol: string;
-    port: number;
+    protocol: Array<string>;
     private _id;
     private _securityGroup;
     private capacity;
@@ -15,13 +14,15 @@ export declare class Cluster implements Resource {
     private min_size;
     private region;
     private size;
+    private max_memory_threshold;
     constructor(opts: any);
+    readonly defaultListenerName: string;
+    readonly defaultTargetGroupName: string;
     requireVpcId(): void;
     requireCertificate(): void;
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
-    setPort(): 443 | 80;
     readonly name: string;
     readonly id: string | {
         'Ref': string;
@@ -33,33 +34,7 @@ export declare class Cluster implements Resource {
         'Ref': string;
     };
     generate(): {} | {
-        'AutoScalingGroup': {
-            'Type': string;
-            'CreationPolicy': {
-                'ResourceSignal': {
-                    'Timeout': string;
-                };
-            };
-            'UpdatePolicy': {
-                'AutoScalingReplacingUpdate': {
-                    'WillReplace': string;
-                };
-                'AutoScalingRollingUpdate': {
-                    'MinInstancesInService': number;
-                    'MaxBatchSize': number;
-                };
-            };
-            'Properties': {
-                'DesiredCapacity': number;
-                'LaunchConfigurationName': {
-                    'Ref': string;
-                };
-                'MaxSize': number;
-                'MinSize': number;
-                'VPCZoneIdentifier': string;
-            };
-        };
-        'ContainerlessInstanceProfile': {
+        'ClsInstanceProfile': {
             'Type': string;
             'Properties': {
                 'Path': string;
@@ -68,11 +43,11 @@ export declare class Cluster implements Resource {
                 }[];
             };
         };
-        'ContainerlessCluster': {
+        'ClsCluster': {
             'Type': string;
             'DependsOn': string;
         };
-        'ContainerlessLaunchConfiguration': {
+        'ClsLaunchConfiguration': {
             'Type': string;
             'DependsOn': string[];
             'Properties': {
@@ -93,7 +68,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessInstanceRole': {
+        'ClsInstanceRole': {
             'Type': string;
             'Properties': {
                 'AssumeRolePolicyDocument': {
@@ -118,14 +93,14 @@ export declare class Cluster implements Resource {
                 }[];
             };
         };
-        'ContainerlessSecurityGroup': {
+        'ClsSecurityGroup': {
             'Properties': {
                 'GroupDescription': string;
                 'VpcId': string;
             };
             'Type': string;
         };
-        'ContainerlessSecurityGroupDynamicPorts': {
+        'ClsSecurityGroupDynamicPorts': {
             'Type': string;
             'Properties': {
                 'IpProtocol': string;
@@ -139,7 +114,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessSecurityGroupHTTP': {
+        'ClsSecurityGroupHTTP': {
             'Type': string;
             'Properties': {
                 'CidrIp': string;
@@ -151,7 +126,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessSecurityGroupHTTPS': {
+        'ClsSecurityGroupHTTPS': {
             'Type': string;
             'Properties': {
                 'CidrIp': string;
@@ -163,7 +138,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessELBRole': {
+        'ClsELBRole': {
             'Type': string;
             'Properties': {
                 'AssumeRolePolicyDocument': {
@@ -186,6 +161,67 @@ export declare class Cluster implements Resource {
                         }[];
                     };
                 }[];
+            };
+        };
+        'ClsAutoScalingGroup': {
+            'Type': string;
+            'CreationPolicy': {
+                'ResourceSignal': {
+                    'Timeout': string;
+                };
+            };
+            'UpdatePolicy': {
+                'AutoScalingReplacingUpdate': {
+                    'WillReplace': string;
+                };
+                'AutoScalingRollingUpdate': {
+                    'MinInstancesInService': number;
+                    'MaxBatchSize': number;
+                    'PauseTime': string;
+                    'WaitOnResourceSignals': string;
+                };
+            };
+            'Properties': {
+                'DesiredCapacity': number;
+                'LaunchConfigurationName': {
+                    'Ref': string;
+                };
+                'MaxSize': number;
+                'MinSize': number;
+                'VPCZoneIdentifier': string;
+            };
+        };
+        'MemoryReservationScaleUpPolicy': {
+            'Type': string;
+            'Properties': {
+                'AdjustmentType': string;
+                'AutoScalingGroupName': {
+                    'Ref': string;
+                };
+                'Cooldown': string;
+                'ScalingAdjustment': string;
+            };
+        };
+        'MemoryReservationHighAlert': {
+            'Type': string;
+            'Properties': {
+                'EvaluationPeriods': string;
+                'Statistic': string;
+                'Threshold': number;
+                'AlarmDescription': string;
+                'Period': string;
+                'AlarmActions': {
+                    'Ref': string;
+                }[];
+                'Namespace': string;
+                'Dimensions': {
+                    'Name': string;
+                    'Value': {
+                        'Ref': string;
+                    };
+                }[];
+                'ComparisonOperator': string;
+                'MetricName': string;
             };
         };
     };

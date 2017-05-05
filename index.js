@@ -1,29 +1,28 @@
 "use strict";
-var _ = require("lodash");
-var execSync = require('child_process').execSync;
-var factory_1 = require("./factory");
-var ServerlecsPlugin = (function () {
-    function ServerlecsPlugin(serverless, options) {
-        var _this = this;
-        this.compile = function () {
-            var Resources = _this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
-            var resources = factory_1.prepare(_this.tag, _this.opts);
-            _.each(resources, function (resource) {
-                _this.serverless.cli.log("Building resources for " + resource.name);
+const _ = require("lodash");
+const execSync = require('child_process').execSync;
+const factory_1 = require("./factory");
+class ServerlecsPlugin {
+    constructor(serverless, options) {
+        this.compile = () => {
+            let Resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
+            let resources = factory_1.prepare(this.tag, this.opts);
+            _.each(resources, (resource) => {
+                this.serverless.cli.log(`Building resources for ${resource.name}`);
                 _.merge(Resources, resource.generate());
             });
         };
-        this.build = function () {
-            _this.serverless.cli.log("Configuring containerless");
-            _.each(_this.opts.applications, function (app, name) {
-                _this.serverless.cli.log("Building service " + name);
+        this.build = () => {
+            this.serverless.cli.log(`Configuring containerless`);
+            _.each(this.opts.applications, (app, name) => {
+                this.serverless.cli.log(`Building service ${name}`);
                 if (!app.src)
                     app.src = name;
-                var opts = {
-                    path: _this.serverless.config.servicePath + "/" + app.src,
-                    image: _this.opts.repository + ":" + name + "-" + _this.tag,
+                let opts = {
+                    path: `${this.serverless.config.servicePath}/${app.src}`,
+                    image: `${this.opts.repository}:${name}-${this.tag}`,
                 };
-                _this.dockerBuildAndPush(_.merge(opts, app));
+                this.dockerBuildAndPush(_.merge(opts, app));
             });
         };
         this.serverless = serverless;
@@ -41,47 +40,46 @@ var ServerlecsPlugin = (function () {
             'cls-build:run': this.build,
         };
     }
-    ServerlecsPlugin.prototype.dockerBuildAndPush = function (app) {
+    dockerBuildAndPush(app) {
         this.dockerBuild(app.path, app.image);
         this.dockerPush(app.image);
-        this.serverless.cli.log("Built with tag: " + this.tag);
-    };
-    ServerlecsPlugin.prototype.dockerPush = function (tag) {
-        var command = "docker push " + tag;
-        this.serverless.cli.log("Pushing image " + tag);
+        this.serverless.cli.log(`Built with tag: ${this.tag}`);
+    }
+    dockerPush(tag) {
+        let command = `docker push ${tag}`;
+        this.serverless.cli.log(`Pushing image ${tag}`);
         if (process.env.SLS_DEBUG) {
             this.serverless.cli.log(command);
         }
         if (!process.env.SLS_DEBUG) {
-            var result = execSync(command);
+            let result = execSync(command);
             this.serverless.cli.log(result);
         }
-    };
-    ServerlecsPlugin.prototype.dockerBuild = function (path, tag) {
-        var command = "docker build -t " + tag + " " + path;
-        this.serverless.cli.log("Building image " + tag + " at " + path);
+    }
+    dockerBuild(path, tag) {
+        let command = `docker build -t ${tag} ${path}`;
+        this.serverless.cli.log(`Building image ${tag} at ${path}`);
         if (process.env.SLS_DEBUG) {
             this.serverless.cli.log(command);
         }
-        var result = execSync(command);
+        let result = execSync(command);
         this.serverless.cli.log(result);
-    };
-    ServerlecsPlugin.prototype.getTag = function () {
+    }
+    getTag() {
         if (this.serverless.processedInput.options.tag) {
             return this.serverless.processedInput.options.tag;
         }
         else {
             return Math.floor(Date.now() / 1000);
         }
-    };
-    ServerlecsPlugin.prototype.getOptions = function () {
+    }
+    getOptions() {
         if (this.hasOptions) {
             return _.merge({ service: this.serverless.service.service }, this.serverless.service.custom.containerless);
         }
-    };
-    ServerlecsPlugin.prototype.hasOptions = function () {
+    }
+    hasOptions() {
         return this.serverless.service.custom && this.serverless.service.custom.containerless;
-    };
-    return ServerlecsPlugin;
-}());
+    }
+}
 module.exports = ServerlecsPlugin;

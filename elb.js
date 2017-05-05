@@ -1,18 +1,20 @@
 "use strict";
-var ELB = (function () {
-    function ELB(cluster) {
+Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("lodash");
+class ELB {
+    constructor(cluster) {
+        this.PORTS = {
+            'HTTP': 80,
+            'HTTPS': 443,
+        };
         this.cluster = cluster;
     }
-    Object.defineProperty(ELB.prototype, "name", {
-        get: function () {
-            return 'ELB';
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ELB.prototype.generate = function () {
-        var definition = {
-            'ContainerlessELB': {
+    get name() {
+        return 'ELB';
+    }
+    generate() {
+        let definition = {
+            'ClsELB': {
                 'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
                 'Properties': {
                     'Scheme': 'internet-facing',
@@ -25,42 +27,49 @@ var ELB = (function () {
                     'Subnets': this.cluster.subnets,
                     'SecurityGroups': [this.cluster.securityGroup]
                 }
-            },
-            'ContainerlessListener': {
+            }
+        };
+        let listeners = _.map(this.cluster.protocol, (protocol) => {
+            return this.generateListener(protocol);
+        });
+        return Object.assign(definition, ...listeners);
+    }
+    generateListener(protocol) {
+        let definition = {
+            [`Cls${protocol}Listener`]: {
                 'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-                "DependsOn": 'ContainerlessELB',
+                "DependsOn": 'ClsELB',
                 'Properties': {
                     'Certificates': [],
                     'DefaultActions': [
                         {
                             'Type': 'forward',
                             'TargetGroupArn': {
-                                'Ref': 'ContainerlessDefaultTargetGroup'
+                                'Ref': `Cls${protocol}TargetGroup`
                             }
                         }
                     ],
                     'LoadBalancerArn': {
-                        'Ref': 'ContainerlessELB'
+                        'Ref': 'ClsELB'
                     },
-                    'Port': this.cluster.port,
-                    'Protocol': this.cluster.protocol
+                    'Port': this.PORTS[protocol],
+                    'Protocol': protocol
                 }
             },
-            'ContainerlessDefaultTargetGroup': {
+            [`Cls${protocol}TargetGroup`]: {
                 'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-                'DependsOn': 'ContainerlessELB',
+                'DependsOn': 'ClsELB',
                 'Properties': {
-                    'Port': this.cluster.port,
-                    'Protocol': this.cluster.protocol,
+                    'Port': this.PORTS[protocol],
+                    'Protocol': protocol,
                     'VpcId': this.cluster.vpcId
                 }
             }
         };
-        if (this.cluster.certificate) {
-            definition.ContainerlessListener.Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
+        if (protocol == 'HTTPS') {
+            definition[`Cls${protocol}Listener`].Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
         }
         return definition;
-    };
-    return ELB;
-}());
+    }
+}
 exports.ELB = ELB;

@@ -22,8 +22,7 @@ export class Cluster implements Resource {
   public subnets: string
   public vpcId: string
   public certificate: string
-  public protocol: string
-  public port: number
+  public protocol: Array<string>
 
   private _id: string
   private _securityGroup: string
@@ -55,14 +54,23 @@ export class Cluster implements Resource {
     this.vpcId = opts.vpcId || this.requireVpcId()
     this.subnets = opts.subnets || this.requireSubnets()
 
+    this.protocol = _.castArray(opts.protocol) || ['HTTP']
 
-    this.protocol = opts.protocol || 'HTTP'
-    this.port = opts.port || this.setPort()
     this.certificate = opts.certificate
 
-    if (!this.certificate && this.protocol == 'HTTPS') {
+    if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
       this.requireCertificate()
     }
+  }
+
+  get defaultListenerName() {
+    let protocol = _.first(this.protocol);
+    return `Cls${protocol}Listener`;
+  }
+
+  get defaultTargetGroupName() {
+    let protocol = _.first(this.protocol);
+    return `Cls${protocol}TargetGroup`;
   }
 
   requireVpcId() {
@@ -85,10 +93,6 @@ export class Cluster implements Resource {
     return this.amiIds[this.region];
   }
 
-  setPort() {
-    return (this.protocol == 'HTTPS') ? 443 : 80
-  }
-
   get name() {
     return 'Cluster';
   }
@@ -97,7 +101,7 @@ export class Cluster implements Resource {
     if (this._id) {
       return this._id;
     } else {
-      return { 'Ref': 'ContainerlessCluster'}
+      return { 'Ref': 'ClsCluster'}
     }
   }
 
@@ -105,55 +109,55 @@ export class Cluster implements Resource {
     if (this._securityGroup) {
       return this._securityGroup;
     } else {
-      return { 'Ref': 'ContainerlessSecurityGroup'}
+      return { 'Ref': 'ClsSecurityGroup'}
     }
   }
 
   get elbRole() {
-    return { 'Ref': 'ContainerlessELBRole'}
+    return { 'Ref': 'ClsELBRole'}
   }
 
   generate() {
     if (this._id) return {}
 
     return {
-      'ContainerlessInstanceProfile': {
+      'ClsInstanceProfile': {
         'Type': 'AWS::IAM::InstanceProfile',
         'Properties': {
           'Path': '/',
           'Roles': [
-            { 'Ref': 'ContainerlessInstanceRole' }
+            { 'Ref': 'ClsInstanceRole' }
           ]
         }
       },
-      'ContainerlessCluster': {
+      'ClsCluster': {
         'Type': 'AWS::ECS::Cluster',
-        'DependsOn': 'ContainerlessELBRole'
+        'DependsOn': 'ClsELBRole'
       },
-      'ContainerlessLaunchConfiguration': {
+      'ClsLaunchConfiguration': {
         'Type': 'AWS::AutoScaling::LaunchConfiguration',
-        'DependsOn': ['ContainerlessInstanceProfile', 'ContainerlessSecurityGroup'],
+        'DependsOn': ['ClsInstanceProfile', 'ClsSecurityGroup'],
         'Properties': {
           'AssociatePublicIpAddress': true,
           'IamInstanceProfile': {
-            'Ref': 'ContainerlessInstanceProfile'
+            'Ref': 'ClsInstanceProfile'
           },
           'ImageId': this.ami(),
           'InstanceType': this.instance_type,
           'KeyName': this.key_name,
           'SecurityGroups': [
             {
-              'Ref': 'ContainerlessSecurityGroup'
+              'Ref': 'ClsSecurityGroup'
             }
           ],
           'UserData': {
             'Fn::Base64': {
-              'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\necho ECS_CLUSTER=${ContainerlessCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource ContainerlessAutoScalingGroup --region ${AWS::Region}\n'
+              'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\necho ECS_CLUSTER=${ClsCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource ClsAutoScalingGroup --region ${AWS::Region}\n'
             }
           }
         }
       },
-      'ContainerlessInstanceRole': {
+      'ClsInstanceRole': {
         'Type': 'AWS::IAM::Role',
         'Properties': {
           'AssumeRolePolicyDocument': {
@@ -203,28 +207,28 @@ export class Cluster implements Resource {
         },
 
       },
-      'ContainerlessSecurityGroup': {
+      'ClsSecurityGroup': {
         'Properties': {
           'GroupDescription': 'ECS Public Security Group',
           'VpcId': this.vpcId
         },
         'Type': 'AWS::EC2::SecurityGroup'
       },
-      'ContainerlessSecurityGroupDynamicPorts': {
+      'ClsSecurityGroupDynamicPorts': {
         'Type': 'AWS::EC2::SecurityGroupIngress',
         'Properties': {
           'IpProtocol': 'tcp',
           'FromPort': 31000,
           'ToPort': 61000,
           'GroupId': {
-            'Ref': 'ContainerlessSecurityGroup'
+            'Ref': 'ClsSecurityGroup'
           },
           'SourceSecurityGroupId': {
-            'Ref': 'ContainerlessSecurityGroup'
+            'Ref': 'ClsSecurityGroup'
           }
         }
       },
-      'ContainerlessSecurityGroupHTTP': {
+      'ClsSecurityGroupHTTP': {
         'Type': 'AWS::EC2::SecurityGroupIngress',
         'Properties': {
           'CidrIp': '0.0.0.0/0',
@@ -232,11 +236,11 @@ export class Cluster implements Resource {
           'FromPort': '80',
           'ToPort': '80',
           'GroupId': {
-            'Ref': 'ContainerlessSecurityGroup'
+            'Ref': 'ClsSecurityGroup'
           }
         },
       },
-      'ContainerlessSecurityGroupHTTPS': {
+      'ClsSecurityGroupHTTPS': {
         'Type': 'AWS::EC2::SecurityGroupIngress',
         'Properties': {
           'CidrIp': '0.0.0.0/0',
@@ -244,11 +248,11 @@ export class Cluster implements Resource {
           'FromPort': '443',
           'ToPort': '443',
           'GroupId': {
-            'Ref': 'ContainerlessSecurityGroup'
+            'Ref': 'ClsSecurityGroup'
           }
         }
       },
-      'ContainerlessELBRole': {
+      'ClsELBRole': {
         'Type': 'AWS::IAM::Role',
         'Properties': {
           'AssumeRolePolicyDocument': {
@@ -291,7 +295,7 @@ export class Cluster implements Resource {
           ]
         }
       },
-      'ContainerlessAutoScalingGroup': {
+      'ClsAutoScalingGroup': {
         'Type': 'AWS::AutoScaling::AutoScalingGroup',
         'CreationPolicy': {
           'ResourceSignal': {
@@ -312,7 +316,7 @@ export class Cluster implements Resource {
         'Properties': {
           'DesiredCapacity': this.capacity,
           'LaunchConfigurationName': {
-            'Ref': 'ContainerlessLaunchConfiguration'
+            'Ref': 'ClsLaunchConfiguration'
           },
           'MaxSize': this.max_size,
           'MinSize': this.min_size,
@@ -324,7 +328,7 @@ export class Cluster implements Resource {
         'Properties': {
           'AdjustmentType': 'PercentChangeInCapacity',
           'AutoScalingGroupName': {
-            'Ref': 'ContainerlessAutoScalingGroup'
+            'Ref': 'ClsAutoScalingGroup'
           },
           'Cooldown': '300',
           'ScalingAdjustment': '30'
@@ -346,7 +350,7 @@ export class Cluster implements Resource {
             {
               'Name': 'ClusterName',
               'Value': {
-                'Ref': 'ContainerlessCluster'
+                'Ref': 'ClsCluster'
               }
             }
           ],

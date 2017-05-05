@@ -1,6 +1,8 @@
 "use strict";
-var Cluster = (function () {
-    function Cluster(opts) {
+Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("lodash");
+class Cluster {
+    constructor(opts) {
         // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
         this.amiIds = {
             'us-east-1': 'ami-275ffe31',
@@ -32,110 +34,98 @@ var Cluster = (function () {
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
         this.subnets = opts.subnets || this.requireSubnets();
-        this.protocol = opts.protocol || 'HTTP';
-        this.port = opts.port || this.setPort();
+        this.protocol = _.castArray(opts.protocol) || ['HTTP'];
         this.certificate = opts.certificate;
-        if (!this.certificate && this.protocol == 'HTTPS') {
+        if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
             this.requireCertificate();
         }
     }
-    Cluster.prototype.requireVpcId = function () {
+    get defaultListenerName() {
+        let protocol = _.first(this.protocol);
+        return `Cls${protocol}Listener`;
+    }
+    get defaultTargetGroupName() {
+        let protocol = _.first(this.protocol);
+        return `Cls${protocol}TargetGroup`;
+    }
+    requireVpcId() {
         throw new TypeError('Cluster requires a VPC Id');
-    };
-    Cluster.prototype.requireCertificate = function () {
+    }
+    requireCertificate() {
         throw new TypeError('Cluster requires a Certificate ARN for HTTPS');
-    };
-    Cluster.prototype.requireSubnets = function () {
+    }
+    requireSubnets() {
         throw new TypeError('Cluster requires at least one Subnet Id');
-    };
-    Cluster.prototype.requireSecurityGroup = function () {
+    }
+    requireSecurityGroup() {
         throw new TypeError('Cluster requires a Security Group for mapping the Load Balancer');
-    };
-    Cluster.prototype.ami = function () {
+    }
+    ami() {
         return this.amiIds[this.region];
-    };
-    Cluster.prototype.setPort = function () {
-        return (this.protocol == 'HTTPS') ? 443 : 80;
-    };
-    Object.defineProperty(Cluster.prototype, "name", {
-        get: function () {
-            return 'Cluster';
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Cluster.prototype, "id", {
-        get: function () {
-            if (this._id) {
-                return this._id;
-            }
-            else {
-                return { 'Ref': 'ContainerlessCluster' };
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Cluster.prototype, "securityGroup", {
-        get: function () {
-            if (this._securityGroup) {
-                return this._securityGroup;
-            }
-            else {
-                return { 'Ref': 'ContainerlessSecurityGroup' };
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Cluster.prototype, "elbRole", {
-        get: function () {
-            return { 'Ref': 'ContainerlessELBRole' };
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Cluster.prototype.generate = function () {
+    }
+    get name() {
+        return 'Cluster';
+    }
+    get id() {
+        if (this._id) {
+            return this._id;
+        }
+        else {
+            return { 'Ref': 'ClsCluster' };
+        }
+    }
+    get securityGroup() {
+        if (this._securityGroup) {
+            return this._securityGroup;
+        }
+        else {
+            return { 'Ref': 'ClsSecurityGroup' };
+        }
+    }
+    get elbRole() {
+        return { 'Ref': 'ClsELBRole' };
+    }
+    generate() {
         if (this._id)
             return {};
         return {
-            'ContainerlessInstanceProfile': {
+            'ClsInstanceProfile': {
                 'Type': 'AWS::IAM::InstanceProfile',
                 'Properties': {
                     'Path': '/',
                     'Roles': [
-                        { 'Ref': 'ContainerlessInstanceRole' }
+                        { 'Ref': 'ClsInstanceRole' }
                     ]
                 }
             },
-            'ContainerlessCluster': {
+            'ClsCluster': {
                 'Type': 'AWS::ECS::Cluster',
-                'DependsOn': 'ContainerlessELBRole'
+                'DependsOn': 'ClsELBRole'
             },
-            'ContainerlessLaunchConfiguration': {
+            'ClsLaunchConfiguration': {
                 'Type': 'AWS::AutoScaling::LaunchConfiguration',
-                'DependsOn': ['ContainerlessInstanceProfile', 'ContainerlessSecurityGroup'],
+                'DependsOn': ['ClsInstanceProfile', 'ClsSecurityGroup'],
                 'Properties': {
                     'AssociatePublicIpAddress': true,
                     'IamInstanceProfile': {
-                        'Ref': 'ContainerlessInstanceProfile'
+                        'Ref': 'ClsInstanceProfile'
                     },
                     'ImageId': this.ami(),
                     'InstanceType': this.instance_type,
                     'KeyName': this.key_name,
                     'SecurityGroups': [
                         {
-                            'Ref': 'ContainerlessSecurityGroup'
+                            'Ref': 'ClsSecurityGroup'
                         }
                     ],
                     'UserData': {
                         'Fn::Base64': {
-                            'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\necho ECS_CLUSTER=${ContainerlessCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource ContainerlessAutoScalingGroup --region ${AWS::Region}\n'
+                            'Fn::Sub': '#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\necho ECS_CLUSTER=${ClsCluster} >> /etc/ecs/ecs.config\n\n# /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region}\n\n/opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource ClsAutoScalingGroup --region ${AWS::Region}\n'
                         }
                     }
                 }
             },
-            'ContainerlessInstanceRole': {
+            'ClsInstanceRole': {
                 'Type': 'AWS::IAM::Role',
                 'Properties': {
                     'AssumeRolePolicyDocument': {
@@ -184,28 +174,28 @@ var Cluster = (function () {
                     ]
                 },
             },
-            'ContainerlessSecurityGroup': {
+            'ClsSecurityGroup': {
                 'Properties': {
                     'GroupDescription': 'ECS Public Security Group',
                     'VpcId': this.vpcId
                 },
                 'Type': 'AWS::EC2::SecurityGroup'
             },
-            'ContainerlessSecurityGroupDynamicPorts': {
+            'ClsSecurityGroupDynamicPorts': {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
                     'IpProtocol': 'tcp',
                     'FromPort': 31000,
                     'ToPort': 61000,
                     'GroupId': {
-                        'Ref': 'ContainerlessSecurityGroup'
+                        'Ref': 'ClsSecurityGroup'
                     },
                     'SourceSecurityGroupId': {
-                        'Ref': 'ContainerlessSecurityGroup'
+                        'Ref': 'ClsSecurityGroup'
                     }
                 }
             },
-            'ContainerlessSecurityGroupHTTP': {
+            'ClsSecurityGroupHTTP': {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
                     'CidrIp': '0.0.0.0/0',
@@ -213,11 +203,11 @@ var Cluster = (function () {
                     'FromPort': '80',
                     'ToPort': '80',
                     'GroupId': {
-                        'Ref': 'ContainerlessSecurityGroup'
+                        'Ref': 'ClsSecurityGroup'
                     }
                 },
             },
-            'ContainerlessSecurityGroupHTTPS': {
+            'ClsSecurityGroupHTTPS': {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
                     'CidrIp': '0.0.0.0/0',
@@ -225,11 +215,11 @@ var Cluster = (function () {
                     'FromPort': '443',
                     'ToPort': '443',
                     'GroupId': {
-                        'Ref': 'ContainerlessSecurityGroup'
+                        'Ref': 'ClsSecurityGroup'
                     }
                 }
             },
-            'ContainerlessELBRole': {
+            'ClsELBRole': {
                 'Type': 'AWS::IAM::Role',
                 'Properties': {
                     'AssumeRolePolicyDocument': {
@@ -272,7 +262,7 @@ var Cluster = (function () {
                     ]
                 }
             },
-            'ContainerlessAutoScalingGroup': {
+            'ClsAutoScalingGroup': {
                 'Type': 'AWS::AutoScaling::AutoScalingGroup',
                 'CreationPolicy': {
                     'ResourceSignal': {
@@ -293,7 +283,7 @@ var Cluster = (function () {
                 'Properties': {
                     'DesiredCapacity': this.capacity,
                     'LaunchConfigurationName': {
-                        'Ref': 'ContainerlessLaunchConfiguration'
+                        'Ref': 'ClsLaunchConfiguration'
                     },
                     'MaxSize': this.max_size,
                     'MinSize': this.min_size,
@@ -305,7 +295,7 @@ var Cluster = (function () {
                 'Properties': {
                     'AdjustmentType': 'PercentChangeInCapacity',
                     'AutoScalingGroupName': {
-                        'Ref': 'ContainerlessAutoScalingGroup'
+                        'Ref': 'ClsAutoScalingGroup'
                     },
                     'Cooldown': '300',
                     'ScalingAdjustment': '30'
@@ -327,7 +317,7 @@ var Cluster = (function () {
                         {
                             'Name': 'ClusterName',
                             'Value': {
-                                'Ref': 'ContainerlessCluster'
+                                'Ref': 'ClsCluster'
                             }
                         }
                     ],
@@ -336,7 +326,6 @@ var Cluster = (function () {
                 }
             }
         };
-    };
-    return Cluster;
-}());
+    }
+}
 exports.Cluster = Cluster;

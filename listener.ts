@@ -27,12 +27,8 @@ export class Listener implements Resource {
     return `${this.service.name}Listener`;
   }
 
-  get listenerRuleName() {
-    return `${this.service.name}ListenerRule`;
-  }
-
   get targetGroupName() {
-    return `${this.service.name}TargetGroup`;
+    return `${this.service.name}Target`;
   }
 
   required() {
@@ -40,19 +36,41 @@ export class Listener implements Resource {
   }
 
   generate() {
-    if (!this.required()) return {}
+    if (!this.required()) return []
 
-    let resources:any = {}
+    let definition: any = {
+      [this.targetGroupName]: {
+        'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
+        'Properties': {
+          'Name': this.targetGroupName,
+          'HealthCheckIntervalSeconds': 10,
+          'HealthCheckPath': '/',
+          'HealthCheckProtocol': 'HTTP',
+          'HealthCheckTimeoutSeconds': 5,
+          'HealthyThresholdCount': 2,
+          'Port': 80,
+          'Protocol': 'HTTP',
+          'UnhealthyThresholdCount': 2,
+          'VpcId': this.cluster.vpcId
+        }
+      }
+    }
 
-    resources[this.listenerRuleName] = {
+    _.each(this.cluster.protocol, (protocol) => {
+      definition[`${this.service.name}${protocol}Rule`] = this.generateForProtocol(protocol);
+    });
+
+    return definition;
+  }
+
+  generateForProtocol(protocol: string) {
+    return {
       'Type' : 'AWS::ElasticLoadBalancingV2::ListenerRule',
-      "DependsOn": ["ContainerlessListener", this.targetGroupName],
+      "DependsOn": [`Cls${protocol}Listener`, `Cls${protocol}TargetGroup`, this.targetGroupName],
       'Properties' : {
         'Actions' : [
           {
-            'TargetGroupArn' : {
-              'Ref':  this.targetGroupName
-          },
+            'TargetGroupArn' : { 'Ref':  this.targetGroupName },
             'Type' : 'forward'
           }
         ],
@@ -62,28 +80,10 @@ export class Listener implements Resource {
             'Values' : [ this.service.url ]
           }
         ],
-        'ListenerArn' : {'Ref': 'ContainerlessListener'},
+        'ListenerArn' : {'Ref': `Cls${protocol}Listener`},
         'Priority' : this.priority
       }
     }
-
-    resources[this.targetGroupName] = {
-      'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-      'Properties': {
-        'Name': this.targetGroupName,
-        'HealthCheckIntervalSeconds': 10,
-        'HealthCheckPath': '/',
-        'HealthCheckProtocol': 'HTTP',
-        'HealthCheckTimeoutSeconds': 5,
-        'HealthyThresholdCount': 2,
-        'Port': 80,
-        'Protocol': 'HTTP',
-        'UnhealthyThresholdCount': 2,
-        'VpcId': this.cluster.vpcId
-      }
-    }
-
-    return resources;
   }
 
   get mapping() {
@@ -98,7 +98,6 @@ export class Listener implements Resource {
     }];
 
   }
-
 
 }
 

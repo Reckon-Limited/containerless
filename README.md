@@ -110,6 +110,7 @@ custom:
       subnets:
         - sg-000000000001
         - sg-000000000002
+      protocol: HTTPS
     repository: 000000000000.dkr.ecr.ap-southeast-2.amazonaws.com/containerless
 ```
 
@@ -138,6 +139,20 @@ custom:
         - sg-000000000002
     repository: 000000000000.dkr.ecr.ap-southeast-2.amazonaws.com/containerless
 ```
+
+### Load Balancer ###
+
+The ALB will default to HTTP, but either or both HTTP and HTTPS can be specified in the cluster properties. The default ports of 80 and 443 will be used.  
+
+```
+cluster:
+  protocol:
+    - HTTP
+    - HTTPS
+```
+
+Note: these are the end-user public facing ports, not the ports that are mounted by a docker image, these are mapped internally by the Cluster.
+
 
 
 ### Applications ###

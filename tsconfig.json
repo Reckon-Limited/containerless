@@ -1,7 +1,8 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-      "target": "ES5",
+      "target": "ES6",
+      "module": "commonjs",
       "noImplicitAny": true,
       "noEmitOnError": false,
       "removeComments": false,
@@ -12,6 +13,9 @@
       "declaration": true
     },
     "exclude": [
-      "node_modules/**"
+      "node_modules",
+      "node_modules/**",
+      "node_modules/typescript",
+      "node_modules/@types"
     ]
 }

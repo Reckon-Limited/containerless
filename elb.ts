@@ -7,6 +7,11 @@ export class ELB implements Resource {
 
   cluster: Cluster
 
+  private PORTS: { [protocol: string]: number; }  = {
+    'HTTP': 80,
+    'HTTPS': 443,
+  }
+
   constructor(cluster: Cluster) {
     this.cluster = cluster;
   }
@@ -17,7 +22,7 @@ export class ELB implements Resource {
 
   generate() {
     let definition:any = {
-      'ContainerlessELB': {
+      'ClsELB': {
         'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
         'Properties': {
           'Scheme': 'internet-facing',
@@ -30,42 +35,56 @@ export class ELB implements Resource {
           'Subnets': this.cluster.subnets,
           'SecurityGroups': [this.cluster.securityGroup]
         }
-      },
-      'ContainerlessListener': {
+      }
+    }
+
+    let listeners:Array<any> =  _.map(this.cluster.protocol, (protocol) => {
+      return this.generateListener(protocol)
+    })
+
+    return Object.assign(definition, ...listeners);
+  }
+
+  generateListener(protocol: string) {
+    let definition:any = {
+      [`Cls${protocol}Listener`]: {
         'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-        "DependsOn": 'ContainerlessELB',
+        "DependsOn": 'ClsELB',
         'Properties': {
           'Certificates': [],
           'DefaultActions': [
             {
               'Type': 'forward',
               'TargetGroupArn': {
-                'Ref': 'ContainerlessDefaultTargetGroup'
+                'Ref': `Cls${protocol}TargetGroup`
               }
             }
           ],
           'LoadBalancerArn': {
-            'Ref': 'ContainerlessELB'
+            'Ref': 'ClsELB'
           },
-          'Port': this.cluster.port,
-          'Protocol': this.cluster.protocol
+          'Port': this.PORTS[protocol],
+          'Protocol': protocol
         }
       },
-      'ContainerlessDefaultTargetGroup': {
+      [`Cls${protocol}TargetGroup`]: {
         'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-        'DependsOn': 'ContainerlessELB',
+        'DependsOn': 'ClsELB',
         'Properties': {
-          'Port': this.cluster.port,
-          'Protocol': this.cluster.protocol,
+          'Port': this.PORTS[protocol],
+          'Protocol': protocol,
           'VpcId': this.cluster.vpcId
         }
       }
     }
 
-    if (this.cluster.certificate) {
-      definition.ContainerlessListener.Properties.Certificates = [{'CertificateArn': this.cluster.certificate}]
+    if (protocol == 'HTTPS') {
+      definition[`Cls${protocol}Listener`].Properties.Certificates = [{'CertificateArn': this.cluster.certificate}]
     }
 
     return definition;
   }
+
+
+
 }

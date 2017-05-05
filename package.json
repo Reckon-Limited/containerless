@@ -17,9 +17,11 @@
     "lodash": "^4.17.3",
     "mocha": "^3.2.0",
     "mocha-typescript": "^1.0.15",
-    "typescript": "^2.1.4"
+    "typescript": "^2.3.2"
   },
   "scripts": {
+    "test": "mocha",
+    "watch": "mocha-typescript-watch",
     "dev-test-watch": "mocha-typescript-watch"
   }
 }
