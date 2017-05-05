@@ -61,7 +61,7 @@ describe('create a new cluster with HTTPS', () => {
             this.cluster = new cluster_1.Cluster(this.opts);
         }
         id() {
-            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ContainerlessCluster' });
+            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
         }
         resources_not_empty() {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
@@ -101,7 +101,7 @@ describe('create a new cluster with both HTTP and HTTPS', () => {
             this.cluster = new cluster_1.Cluster(this.opts);
         }
         id() {
-            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ContainerlessCluster' });
+            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
         }
         resources_not_empty() {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
@@ -141,7 +141,7 @@ describe('create a new cluster with HTTP', () => {
             this.cluster = new cluster_1.Cluster(this.opts);
         }
         id() {
-            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ContainerlessCluster' });
+            chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
         }
         resources_not_empty() {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;

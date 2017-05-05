@@ -16,6 +16,8 @@ export declare class Cluster implements Resource {
     private size;
     private max_memory_threshold;
     constructor(opts: any);
+    readonly defaultListenerName: string;
+    readonly defaultTargetGroupName: string;
     requireVpcId(): void;
     requireCertificate(): void;
     requireSubnets(): void;
@@ -32,7 +34,7 @@ export declare class Cluster implements Resource {
         'Ref': string;
     };
     generate(): {} | {
-        'ContainerlessInstanceProfile': {
+        'ClsInstanceProfile': {
             'Type': string;
             'Properties': {
                 'Path': string;
@@ -41,11 +43,11 @@ export declare class Cluster implements Resource {
                 }[];
             };
         };
-        'ContainerlessCluster': {
+        'ClsCluster': {
             'Type': string;
             'DependsOn': string;
         };
-        'ContainerlessLaunchConfiguration': {
+        'ClsLaunchConfiguration': {
             'Type': string;
             'DependsOn': string[];
             'Properties': {
@@ -66,7 +68,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessInstanceRole': {
+        'ClsInstanceRole': {
             'Type': string;
             'Properties': {
                 'AssumeRolePolicyDocument': {
@@ -91,14 +93,14 @@ export declare class Cluster implements Resource {
                 }[];
             };
         };
-        'ContainerlessSecurityGroup': {
+        'ClsSecurityGroup': {
             'Properties': {
                 'GroupDescription': string;
                 'VpcId': string;
             };
             'Type': string;
         };
-        'ContainerlessSecurityGroupDynamicPorts': {
+        'ClsSecurityGroupDynamicPorts': {
             'Type': string;
             'Properties': {
                 'IpProtocol': string;
@@ -112,7 +114,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessSecurityGroupHTTP': {
+        'ClsSecurityGroupHTTP': {
             'Type': string;
             'Properties': {
                 'CidrIp': string;
@@ -124,7 +126,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessSecurityGroupHTTPS': {
+        'ClsSecurityGroupHTTPS': {
             'Type': string;
             'Properties': {
                 'CidrIp': string;
@@ -136,7 +138,7 @@ export declare class Cluster implements Resource {
                 };
             };
         };
-        'ContainerlessELBRole': {
+        'ClsELBRole': {
             'Type': string;
             'Properties': {
                 'AssumeRolePolicyDocument': {
@@ -161,7 +163,7 @@ export declare class Cluster implements Resource {
                 }[];
             };
         };
-        'ContainerlessAutoScalingGroup': {
+        'ClsAutoScalingGroup': {
             'Type': string;
             'CreationPolicy': {
                 'ResourceSignal': {

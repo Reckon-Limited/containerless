@@ -75,7 +75,7 @@ describe('with an existing cluster and a load balanced container', () => {
 
     @test service_role(){
       let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
-      expect(result).to.eql('ContainerlessELBRole');
+      expect(result).to.eql('ClsELBRole');
     }
 
     @test service_load_balancers(){

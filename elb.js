@@ -14,7 +14,7 @@ class ELB {
     }
     generate() {
         let definition = {
-            'ContainerlessELB': {
+            'ClsELB': {
                 'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
                 'Properties': {
                     'Scheme': 'internet-facing',
@@ -36,29 +36,29 @@ class ELB {
     }
     generateListener(protocol) {
         let definition = {
-            [`Containerless${protocol}Listener`]: {
+            [`Cls${protocol}Listener`]: {
                 'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-                "DependsOn": 'ContainerlessELB',
+                "DependsOn": 'ClsELB',
                 'Properties': {
                     'Certificates': [],
                     'DefaultActions': [
                         {
                             'Type': 'forward',
                             'TargetGroupArn': {
-                                'Ref': 'ContainerlessDefaultTargetGroup'
+                                'Ref': `Cls${protocol}TargetGroup`
                             }
                         }
                     ],
                     'LoadBalancerArn': {
-                        'Ref': 'ContainerlessELB'
+                        'Ref': 'ClsELB'
                     },
                     'Port': this.PORTS[protocol],
                     'Protocol': protocol
                 }
             },
-            [`Containerless${protocol}TargetGroup`]: {
+            [`Cls${protocol}TargetGroup`]: {
                 'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-                'DependsOn': 'ContainerlessELB',
+                'DependsOn': 'ClsELB',
                 'Properties': {
                     'Port': this.PORTS[protocol],
                     'Protocol': protocol,
@@ -67,9 +67,8 @@ class ELB {
             }
         };
         if (protocol == 'HTTPS') {
-            definition[`Containerless${protocol}Listener`].Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
+            definition[`Cls${protocol}Listener`].Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
         }
-        console.log(definition);
         return definition;
     }
 }

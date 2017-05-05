@@ -8,15 +8,14 @@ export declare class Listener implements Resource {
     constructor(service: Service, cluster: Cluster);
     calculatePriority(): number;
     readonly name: string;
-    readonly listenerRuleName: string;
-    readonly targetGroupName: string;
     required(): number | "";
-    generate(): any;
+    generate(): any[];
+    generateForProtocol(protocol: string): any;
     readonly mapping: {
         'ContainerName': string;
         'ContainerPort': number;
         'TargetGroupArn': {
-            'Ref': string;
+            'Ref': any;
         };
     }[];
 }

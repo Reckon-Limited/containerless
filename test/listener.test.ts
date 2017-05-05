@@ -18,7 +18,8 @@ describe('service with port and url', () => {
         'subnet-12359e64',
         'subnet-b442c0d0',
         'subnet-a2b967fb'
-      ]
+      ],
+      protocol: ['HTTP']
     }
 
     opts = {
@@ -44,13 +45,13 @@ describe('service with port and url', () => {
       this.resources = this.listener.generate();
     }
 
-    @test listener_resource(){
-      let result = _.get(this.resources, 'BlahVthaDevApp1ListenerRule.Type');
+    @test listener_resource() {
+      let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPRule.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::ListenerRule');
     }
 
-    @test task_definition_resource_type(){
-      let result = _.get(this.resources, 'BlahVthaDevApp1TargetGroup.Type');
+    @test task_definition_resource_type() {
+      let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPTarget.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
     }
 

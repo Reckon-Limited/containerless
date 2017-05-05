@@ -35,22 +35,22 @@ describe('with an existing cluster', () => {
     }
 
     @test elb_resource(){
-      let result = _.get(this.resources, 'ContainerlessELB.Type');
+      let result = _.get(this.resources, 'ClsELB.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer')
     }
 
     @test elb_resource_security_group(){
-      let result = _.get(this.resources, 'ContainerlessELB.Properties.SecurityGroups');
+      let result = _.get(this.resources, 'ClsELB.Properties.SecurityGroups');
       expect(result).to.eql([this.opts.security_group])
     }
 
     @test elb_resource_subnets(){
-      let result = _.get(this.resources, 'ContainerlessELB.Properties.Subnets');
+      let result = _.get(this.resources, 'ClsELB.Properties.Subnets');
       expect(result).to.eql(this.opts.subnets)
     }
 
     @test elb_resource_vpcId() {
-      let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.VpcId');
+      let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
       expect(result).to.eql(this.opts.vpcId)
     }
   }
@@ -79,12 +79,12 @@ describe('creating a new cluster with HTTP and HTTPS', () => {
     }
 
     @test generates_http_listener() {
-      let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.Port');
+      let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
       expect(result).to.eql(80)
     }
 
     @test generates_https_listener() {
-      let result = _.get(this.resources, 'ContainerlessHTTPSTargetGroup.Properties.Port');
+      let result = _.get(this.resources, 'ClsHTTPSTargetGroup.Properties.Port');
       expect(result).to.eql(443)
     }
 });
@@ -112,27 +112,27 @@ describe('creating a new cluster with HTTP', () => {
     }
 
     @test elb_resource(){
-      let result = _.get(this.resources, 'ContainerlessELB.Type');
+      let result = _.get(this.resources, 'ClsELB.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer')
     }
 
     @test elb_listener_certificate(){
-      let result = _.get(this.resources, 'ContainerlessListener.Properties.Certificates[0].CertificateArn');
+      let result = _.get(this.resources, 'ClsHTTPListener.Properties.Certificates[0].CertificateArn');
       expect(result).to.be.empty
     }
 
     @test elb_resource_subnets(){
-      let result = _.get(this.resources, 'ContainerlessELB.Properties.Subnets');
+      let result = _.get(this.resources, 'ClsELB.Properties.Subnets');
       expect(result).to.eql(this.opts.subnets)
     }
 
     @test elb_resource_vpcId() {
-      let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.VpcId');
+      let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
       expect(result).to.eql(this.opts.vpcId)
     }
 
     @test generates_http_listener() {
-      let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.Port');
+      let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
       expect(result).to.eql(80)
     }
 

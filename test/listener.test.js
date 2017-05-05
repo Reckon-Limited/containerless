@@ -21,7 +21,8 @@ describe('service with port and url', () => {
                     'subnet-12359e64',
                     'subnet-b442c0d0',
                     'subnet-a2b967fb'
-                ]
+                ],
+                protocol: ['HTTP']
             };
             this.opts = {
                 service: 'blah-vtha-dev',
@@ -40,11 +41,11 @@ describe('service with port and url', () => {
             this.resources = this.listener.generate();
         }
         listener_resource() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1ListenerRule.Type');
+            let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPRule.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::ListenerRule');
         }
         task_definition_resource_type() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1TargetGroup.Type');
+            let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPTarget.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
         }
         priority() {

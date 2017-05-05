@@ -57,7 +57,7 @@ describe('create a new cluster with HTTPS', () => {
     }
 
     @test id() {
-      expect(this.cluster.id).to.eql({'Ref': 'ContainerlessCluster'})
+      expect(this.cluster.id).to.eql({'Ref': 'ClsCluster'})
     }
 
     @test resources_not_empty(){
@@ -91,7 +91,7 @@ describe('create a new cluster with both HTTP and HTTPS', () => {
     }
 
     @test id() {
-      expect(this.cluster.id).to.eql({'Ref': 'ContainerlessCluster'})
+      expect(this.cluster.id).to.eql({'Ref': 'ClsCluster'})
     }
 
     @test resources_not_empty(){
@@ -124,7 +124,7 @@ describe('create a new cluster with HTTP', () => {
     }
 
     @test id() {
-      expect(this.cluster.id).to.eql({'Ref': 'ContainerlessCluster'})
+      expect(this.cluster.id).to.eql({'Ref': 'ClsCluster'})
     }
 
     @test resources_not_empty(){

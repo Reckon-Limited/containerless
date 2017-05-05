@@ -32,19 +32,19 @@ describe('with an existing cluster', () => {
             this.resources = this.elb.generate();
         }
         elb_resource() {
-            let result = _.get(this.resources, 'ContainerlessELB.Type');
+            let result = _.get(this.resources, 'ClsELB.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer');
         }
         elb_resource_security_group() {
-            let result = _.get(this.resources, 'ContainerlessELB.Properties.SecurityGroups');
+            let result = _.get(this.resources, 'ClsELB.Properties.SecurityGroups');
             chai_1.expect(result).to.eql([this.opts.security_group]);
         }
         elb_resource_subnets() {
-            let result = _.get(this.resources, 'ContainerlessELB.Properties.Subnets');
+            let result = _.get(this.resources, 'ClsELB.Properties.Subnets');
             chai_1.expect(result).to.eql(this.opts.subnets);
         }
         elb_resource_vpcId() {
-            let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.VpcId');
+            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
             chai_1.expect(result).to.eql(this.opts.vpcId);
         }
     };
@@ -84,11 +84,11 @@ describe('creating a new cluster with HTTP and HTTPS', () => {
             this.resources = this.elb.generate();
         }
         generates_http_listener() {
-            let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.Port');
+            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
             chai_1.expect(result).to.eql(80);
         }
         generates_https_listener() {
-            let result = _.get(this.resources, 'ContainerlessHTTPSTargetGroup.Properties.Port');
+            let result = _.get(this.resources, 'ClsHTTPSTargetGroup.Properties.Port');
             chai_1.expect(result).to.eql(443);
         }
     };
@@ -121,23 +121,23 @@ describe('creating a new cluster with HTTP', () => {
             this.resources = this.elb.generate();
         }
         elb_resource() {
-            let result = _.get(this.resources, 'ContainerlessELB.Type');
+            let result = _.get(this.resources, 'ClsELB.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer');
         }
         elb_listener_certificate() {
-            let result = _.get(this.resources, 'ContainerlessListener.Properties.Certificates[0].CertificateArn');
+            let result = _.get(this.resources, 'ClsHTTPListener.Properties.Certificates[0].CertificateArn');
             chai_1.expect(result).to.be.empty;
         }
         elb_resource_subnets() {
-            let result = _.get(this.resources, 'ContainerlessELB.Properties.Subnets');
+            let result = _.get(this.resources, 'ClsELB.Properties.Subnets');
             chai_1.expect(result).to.eql(this.opts.subnets);
         }
         elb_resource_vpcId() {
-            let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.VpcId');
+            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
             chai_1.expect(result).to.eql(this.opts.vpcId);
         }
         generates_http_listener() {
-            let result = _.get(this.resources, 'ContainerlessHTTPTargetGroup.Properties.Port');
+            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
             chai_1.expect(result).to.eql(80);
         }
     };

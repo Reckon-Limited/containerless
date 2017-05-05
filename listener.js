@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("lodash");
 // this is a terrible idea
 let priority = 0;
 class Listener {
@@ -14,54 +15,54 @@ class Listener {
     get name() {
         return `${this.service.name}Listener`;
     }
-    get listenerRuleName() {
-        return `${this.service.name}ListenerRule`;
-    }
-    get targetGroupName() {
-        return `${this.service.name}TargetGroup`;
-    }
     required() {
         return (this.service.url && this.service.port);
     }
     generate() {
         if (!this.required())
-            return {};
-        let resources = {};
-        resources[this.listenerRuleName] = {
-            'Type': 'AWS::ElasticLoadBalancingV2::ListenerRule',
-            "DependsOn": ["ContainerlessListener", this.targetGroupName],
-            'Properties': {
-                'Actions': [
-                    {
-                        'TargetGroupArn': {
-                            'Ref': this.targetGroupName
-                        },
-                        'Type': 'forward'
-                    }
-                ],
-                'Conditions': [
-                    {
-                        'Field': 'path-pattern',
-                        'Values': [this.service.url]
-                    }
-                ],
-                'ListenerArn': { 'Ref': 'ContainerlessListener' },
-                'Priority': this.priority
-            }
-        };
-        resources[this.targetGroupName] = {
-            'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-            'Properties': {
-                'Name': this.targetGroupName,
-                'HealthCheckIntervalSeconds': 10,
-                'HealthCheckPath': '/',
-                'HealthCheckProtocol': 'HTTP',
-                'HealthCheckTimeoutSeconds': 5,
-                'HealthyThresholdCount': 2,
-                'Port': 80,
-                'Protocol': 'HTTP',
-                'UnhealthyThresholdCount': 2,
-                'VpcId': this.cluster.vpcId
+            return [];
+        return _.map(this.cluster.protocol, (protocol) => {
+            return this.generateForProtocol(protocol);
+        });
+    }
+    generateForProtocol(protocol) {
+        let listenerRuleName = `${this.service.name}${protocol}Rule`;
+        let targetGroupName = `${this.service.name}${protocol}Target`;
+        let resources = {
+            [listenerRuleName]: {
+                'Type': 'AWS::ElasticLoadBalancingV2::ListenerRule',
+                "DependsOn": [`Cls${protocol}Listener`, `Cls${protocol}TargetGroup`, targetGroupName],
+                'Properties': {
+                    'Actions': [
+                        {
+                            'TargetGroupArn': { 'Ref': targetGroupName },
+                            'Type': 'forward'
+                        }
+                    ],
+                    'Conditions': [
+                        {
+                            'Field': 'path-pattern',
+                            'Values': [this.service.url]
+                        }
+                    ],
+                    'ListenerArn': { 'Ref': `Cls${protocol}Listener` },
+                    'Priority': this.priority
+                }
+            },
+            [targetGroupName]: {
+                'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
+                'Properties': {
+                    'Name': targetGroupName,
+                    'HealthCheckIntervalSeconds': 10,
+                    'HealthCheckPath': '/',
+                    'HealthCheckProtocol': 'HTTP',
+                    'HealthCheckTimeoutSeconds': 5,
+                    'HealthyThresholdCount': 2,
+                    'Port': 80,
+                    'Protocol': 'HTTP',
+                    'UnhealthyThresholdCount': 2,
+                    'VpcId': this.cluster.vpcId
+                }
             }
         };
         return resources;

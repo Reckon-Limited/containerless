@@ -22,7 +22,7 @@ export class ELB implements Resource {
 
   generate() {
     let definition:any = {
-      'ContainerlessELB': {
+      'ClsELB': {
         'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
         'Properties': {
           'Scheme': 'internet-facing',
@@ -47,29 +47,29 @@ export class ELB implements Resource {
 
   generateListener(protocol: string) {
     let definition:any = {
-      [`Containerless${protocol}Listener`]: {
+      [`Cls${protocol}Listener`]: {
         'Type': 'AWS::ElasticLoadBalancingV2::Listener',
-        "DependsOn": 'ContainerlessELB',
+        "DependsOn": 'ClsELB',
         'Properties': {
           'Certificates': [],
           'DefaultActions': [
             {
               'Type': 'forward',
               'TargetGroupArn': {
-                'Ref': 'ContainerlessDefaultTargetGroup'
+                'Ref': `Cls${protocol}TargetGroup`
               }
             }
           ],
           'LoadBalancerArn': {
-            'Ref': 'ContainerlessELB'
+            'Ref': 'ClsELB'
           },
           'Port': this.PORTS[protocol],
           'Protocol': protocol
         }
       },
-      [`Containerless${protocol}TargetGroup`]: {
+      [`Cls${protocol}TargetGroup`]: {
         'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
-        'DependsOn': 'ContainerlessELB',
+        'DependsOn': 'ClsELB',
         'Properties': {
           'Port': this.PORTS[protocol],
           'Protocol': protocol,
@@ -79,9 +79,9 @@ export class ELB implements Resource {
     }
 
     if (protocol == 'HTTPS') {
-      definition[`Containerless${protocol}Listener`].Properties.Certificates = [{'CertificateArn': this.cluster.certificate}]
+      definition[`Cls${protocol}Listener`].Properties.Certificates = [{'CertificateArn': this.cluster.certificate}]
     }
-    console.log(definition);
+
     return definition;
   }
 
