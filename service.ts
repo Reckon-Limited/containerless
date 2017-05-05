@@ -79,7 +79,7 @@ export class Service implements Resource {
   }
 
   generate() {
-    
+
     let resources: any = {
       [this.name]: {
         'Type': 'AWS::ECS::Service',
@@ -115,9 +115,9 @@ export class Service implements Resource {
       resources[this.name]['Properties']['Role'] = this.cluster.elbRole;
     }
 
-    let listeners:Array<any> = this.listener.generate();
+    let listeners = this.listener.generate();
 
-    return Object.assign(resources, ...listeners);;
+    return Object.assign(resources, listeners);;
   }
 
   definition = () => {

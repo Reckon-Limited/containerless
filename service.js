@@ -110,7 +110,7 @@ class Service {
             resources[this.name]['Properties']['Role'] = this.cluster.elbRole;
         }
         let listeners = this.listener.generate();
-        return Object.assign(resources, ...listeners);
+        return Object.assign(resources, listeners);
         ;
     }
 }

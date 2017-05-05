@@ -51,7 +51,7 @@ describe('service with port and url', () => {
     }
 
     @test task_definition_resource_type() {
-      let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPTarget.Type');
+      let result = _.get(this.resources[0], 'BlahVthaDevApp1Target.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
     }
 

@@ -27,47 +27,22 @@ export class Listener implements Resource {
     return `${this.service.name}Listener`;
   }
 
+  get targetGroupName() {
+    return `${this.service.name}Target`;
+  }
+
   required() {
     return (this.service.url && this.service.port);
   }
 
   generate() {
     if (!this.required()) return []
-    return _.map(this.cluster.protocol, (protocol) => {
-      return this.generateForProtocol(protocol);
-    });
-  }
 
-  generateForProtocol(protocol: string) {
-
-    let listenerRuleName = `${this.service.name}${protocol}Rule`;
-    let targetGroupName = `${this.service.name}${protocol}Target`;
-
-    let resources:any = {
-      [listenerRuleName]: {
-      'Type' : 'AWS::ElasticLoadBalancingV2::ListenerRule',
-      "DependsOn": [`Cls${protocol}Listener`, `Cls${protocol}TargetGroup`, targetGroupName],
-      'Properties' : {
-        'Actions' : [
-          {
-            'TargetGroupArn' : { 'Ref':  targetGroupName },
-            'Type' : 'forward'
-          }
-        ],
-        'Conditions' : [
-          {
-            'Field' : 'path-pattern',
-            'Values' : [ this.service.url ]
-          }
-        ],
-        'ListenerArn' : {'Ref': `Cls${protocol}Listener`},
-        'Priority' : this.priority
-      }
-      },
-      [targetGroupName]: {
+    let definition: any = {
+      [this.targetGroupName]: {
         'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
         'Properties': {
-          'Name': targetGroupName,
+          'Name': this.targetGroupName,
           'HealthCheckIntervalSeconds': 10,
           'HealthCheckPath': '/',
           'HealthCheckProtocol': 'HTTP',
@@ -81,24 +56,48 @@ export class Listener implements Resource {
       }
     }
 
-    return resources;
+    _.each(this.cluster.protocol, (protocol) => {
+      definition[`${this.service.name}${protocol}Rule`] = this.generateForProtocol(protocol);
+    });
+
+    return definition;
+  }
+
+  generateForProtocol(protocol: string) {
+    return {
+      'Type' : 'AWS::ElasticLoadBalancingV2::ListenerRule',
+      "DependsOn": [`Cls${protocol}Listener`, `Cls${protocol}TargetGroup`, this.targetGroupName],
+      'Properties' : {
+        'Actions' : [
+          {
+            'TargetGroupArn' : { 'Ref':  this.targetGroupName },
+            'Type' : 'forward'
+          }
+        ],
+        'Conditions' : [
+          {
+            'Field' : 'path-pattern',
+            'Values' : [ this.service.url ]
+          }
+        ],
+        'ListenerArn' : {'Ref': `Cls${protocol}Listener`},
+        'Priority' : this.priority
+      }
+    }
   }
 
   get mapping() {
     if (!this.required()) return []
 
-    return _.map(this.cluster.protocol, (protocol) => {
-      return {
-        'ContainerName': this.service.name,
-        'ContainerPort': this.service.port,
-        'TargetGroupArn': {
-          'Ref': `${this.service.name}${protocol}Target`
-        }
+    return [{
+      'ContainerName': this.service.name,
+      'ContainerPort': this.service.port,
+      'TargetGroupArn': {
+        'Ref': this.targetGroupName
       }
-    });
+    }];
 
   }
-
 
 }
 
