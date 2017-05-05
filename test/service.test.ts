@@ -65,7 +65,7 @@ describe('with an existing cluster and a load balanced container', () => {
 
     @test environment_variables(){
       let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
-      expect(result).to.eql([{name: 'blah', value: 'vtha'}]);
+      expect(result).to.eql([{ Name: 'blah', Value: 'vtha' }]);
     }
 
     @test port_mappings(){

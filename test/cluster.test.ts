@@ -65,16 +65,46 @@ describe('create a new cluster with HTTPS', () => {
     }
 
     @test sets_protocol(){
-      expect(this.cluster.protocol).to.eql('HTTPS')
-    }
-
-    @test sets_port(){
-      expect(this.cluster.port).to.eql(443)
+      expect(this.cluster.protocol).to.eql(['HTTPS'])
     }
 
   }
 });
 
+
+describe('create a new cluster with both HTTP and HTTPS', () => {
+  @suite class ClusterTest {
+    opts = {
+      vpcId: 'vpc-1',
+      subnets: [
+        'subnet-12359e64',
+        'subnet-b442c0d0',
+        'subnet-a2b967fb'
+      ],
+      protocol: ['HTTP', 'HTTPS'],
+      certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
+    }
+
+    cluster:Cluster
+    before() {
+      this.cluster = new Cluster(this.opts);
+    }
+
+    @test id() {
+      expect(this.cluster.id).to.eql({'Ref': 'ContainerlessCluster'})
+    }
+
+    @test resources_not_empty(){
+      expect(this.cluster.generate()).to.not.be.empty
+    }
+
+    @test sets_protocol(){
+      console.log(this.cluster.protocol)
+      expect(this.cluster.protocol).to.eql(['HTTP', 'HTTPS'])
+    }
+
+  }
+});
 
 describe('create a new cluster with HTTP', () => {
   @suite class ClusterTest {
@@ -102,11 +132,8 @@ describe('create a new cluster with HTTP', () => {
     }
 
     @test sets_protocol(){
-      expect(this.cluster.protocol).to.eql('HTTP')
+      expect(this.cluster.protocol).to.eql(['HTTP'])
     }
 
-    @test sets_port(){
-      expect(this.cluster.port).to.eql(80)
-    }
   }
 });

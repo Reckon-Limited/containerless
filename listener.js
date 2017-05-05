@@ -1,43 +1,32 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // this is a terrible idea
-var priority = 0;
-var Listener = (function () {
-    function Listener(service, cluster) {
+let priority = 0;
+class Listener {
+    constructor(service, cluster) {
         this.service = service;
         this.cluster = cluster;
         this.priority = this.calculatePriority();
     }
-    Listener.prototype.calculatePriority = function () {
+    calculatePriority() {
         return priority = priority + 1;
-    };
-    Object.defineProperty(Listener.prototype, "name", {
-        get: function () {
-            return this.service.name + "Listener";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Listener.prototype, "listenerRuleName", {
-        get: function () {
-            return this.service.name + "ListenerRule";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Listener.prototype, "targetGroupName", {
-        get: function () {
-            return this.service.name + "TargetGroup";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Listener.prototype.required = function () {
+    }
+    get name() {
+        return `${this.service.name}Listener`;
+    }
+    get listenerRuleName() {
+        return `${this.service.name}ListenerRule`;
+    }
+    get targetGroupName() {
+        return `${this.service.name}TargetGroup`;
+    }
+    required() {
         return (this.service.url && this.service.port);
-    };
-    Listener.prototype.generate = function () {
+    }
+    generate() {
         if (!this.required())
             return {};
-        var resources = {};
+        let resources = {};
         resources[this.listenerRuleName] = {
             'Type': 'AWS::ElasticLoadBalancingV2::ListenerRule',
             "DependsOn": ["ContainerlessListener", this.targetGroupName],
@@ -76,24 +65,19 @@ var Listener = (function () {
             }
         };
         return resources;
-    };
-    Object.defineProperty(Listener.prototype, "mapping", {
-        get: function () {
-            if (!this.required())
-                return [];
-            return [{
-                    'ContainerName': this.service.name,
-                    'ContainerPort': this.service.port,
-                    'TargetGroupArn': {
-                        'Ref': this.targetGroupName
-                    }
-                }];
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return Listener;
-}());
+    }
+    get mapping() {
+        if (!this.required())
+            return [];
+        return [{
+                'ContainerName': this.service.name,
+                'ContainerPort': this.service.port,
+                'TargetGroupArn': {
+                    'Ref': this.targetGroupName
+                }
+            }];
+    }
+}
 exports.Listener = Listener;
 function reset() {
     priority = 0;

@@ -7,6 +7,11 @@ export class ELB implements Resource {
 
   cluster: Cluster
 
+  private PORTS: { [protocol: string]: number; }  = {
+    'HTTP': 80,
+    'HTTPS': 443,
+  }
+
   constructor(cluster: Cluster) {
     this.cluster = cluster;
   }
@@ -30,8 +35,19 @@ export class ELB implements Resource {
           'Subnets': this.cluster.subnets,
           'SecurityGroups': [this.cluster.securityGroup]
         }
-      },
-      'ContainerlessListener': {
+      }
+    }
+
+    let listeners:Array<any> =  _.map(this.cluster.protocol, (protocol) => {
+      return this.generateListener(protocol)
+    })
+
+    return Object.assign(definition, ...listeners);
+  }
+
+  generateListener(protocol: string) {
+    let definition:any = {
+      [`Containerless${protocol}Listener`]: {
         'Type': 'AWS::ElasticLoadBalancingV2::Listener',
         "DependsOn": 'ContainerlessELB',
         'Properties': {
@@ -47,25 +63,28 @@ export class ELB implements Resource {
           'LoadBalancerArn': {
             'Ref': 'ContainerlessELB'
           },
-          'Port': this.cluster.port,
-          'Protocol': this.cluster.protocol
+          'Port': this.PORTS[protocol],
+          'Protocol': protocol
         }
       },
-      'ContainerlessDefaultTargetGroup': {
+      [`Containerless${protocol}TargetGroup`]: {
         'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
         'DependsOn': 'ContainerlessELB',
         'Properties': {
-          'Port': this.cluster.port,
-          'Protocol': this.cluster.protocol,
+          'Port': this.PORTS[protocol],
+          'Protocol': protocol,
           'VpcId': this.cluster.vpcId
         }
       }
     }
 
-    if (this.cluster.certificate) {
-      definition.ContainerlessListener.Properties.Certificates = [{'CertificateArn': this.cluster.certificate}]
+    if (protocol == 'HTTPS') {
+      definition[`Containerless${protocol}Listener`].Properties.Certificates = [{'CertificateArn': this.cluster.certificate}]
     }
-
+    console.log(definition);
     return definition;
   }
+
+
+
 }

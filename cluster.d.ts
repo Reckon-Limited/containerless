@@ -4,8 +4,7 @@ export declare class Cluster implements Resource {
     subnets: string;
     vpcId: string;
     certificate: string;
-    protocol: string;
-    port: number;
+    protocol: Array<string>;
     private _id;
     private _securityGroup;
     private capacity;
@@ -15,13 +14,13 @@ export declare class Cluster implements Resource {
     private min_size;
     private region;
     private size;
+    private max_memory_threshold;
     constructor(opts: any);
     requireVpcId(): void;
     requireCertificate(): void;
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
-    setPort(): 443 | 80;
     readonly name: string;
     readonly id: string | {
         'Ref': string;
@@ -33,32 +32,6 @@ export declare class Cluster implements Resource {
         'Ref': string;
     };
     generate(): {} | {
-        'AutoScalingGroup': {
-            'Type': string;
-            'CreationPolicy': {
-                'ResourceSignal': {
-                    'Timeout': string;
-                };
-            };
-            'UpdatePolicy': {
-                'AutoScalingReplacingUpdate': {
-                    'WillReplace': string;
-                };
-                'AutoScalingRollingUpdate': {
-                    'MinInstancesInService': number;
-                    'MaxBatchSize': number;
-                };
-            };
-            'Properties': {
-                'DesiredCapacity': number;
-                'LaunchConfigurationName': {
-                    'Ref': string;
-                };
-                'MaxSize': number;
-                'MinSize': number;
-                'VPCZoneIdentifier': string;
-            };
-        };
         'ContainerlessInstanceProfile': {
             'Type': string;
             'Properties': {
@@ -186,6 +159,67 @@ export declare class Cluster implements Resource {
                         }[];
                     };
                 }[];
+            };
+        };
+        'ContainerlessAutoScalingGroup': {
+            'Type': string;
+            'CreationPolicy': {
+                'ResourceSignal': {
+                    'Timeout': string;
+                };
+            };
+            'UpdatePolicy': {
+                'AutoScalingReplacingUpdate': {
+                    'WillReplace': string;
+                };
+                'AutoScalingRollingUpdate': {
+                    'MinInstancesInService': number;
+                    'MaxBatchSize': number;
+                    'PauseTime': string;
+                    'WaitOnResourceSignals': string;
+                };
+            };
+            'Properties': {
+                'DesiredCapacity': number;
+                'LaunchConfigurationName': {
+                    'Ref': string;
+                };
+                'MaxSize': number;
+                'MinSize': number;
+                'VPCZoneIdentifier': string;
+            };
+        };
+        'MemoryReservationScaleUpPolicy': {
+            'Type': string;
+            'Properties': {
+                'AdjustmentType': string;
+                'AutoScalingGroupName': {
+                    'Ref': string;
+                };
+                'Cooldown': string;
+                'ScalingAdjustment': string;
+            };
+        };
+        'MemoryReservationHighAlert': {
+            'Type': string;
+            'Properties': {
+                'EvaluationPeriods': string;
+                'Statistic': string;
+                'Threshold': number;
+                'AlarmDescription': string;
+                'Period': string;
+                'AlarmActions': {
+                    'Ref': string;
+                }[];
+                'Namespace': string;
+                'Dimensions': {
+                    'Name': string;
+                    'Value': {
+                        'Ref': string;
+                    };
+                }[];
+                'ComparisonOperator': string;
+                'MetricName': string;
             };
         };
     };

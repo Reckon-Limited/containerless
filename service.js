@@ -1,21 +1,21 @@
 "use strict";
-var _ = require("lodash");
-var listener_1 = require("./listener");
-var Service = (function () {
-    function Service(cluster, opts) {
-        var _this = this;
-        this.definition = function () {
-            var definition = {
-                'Name': _this.name,
+Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("lodash");
+const listener_1 = require("./listener");
+class Service {
+    constructor(cluster, opts) {
+        this.definition = () => {
+            let definition = {
+                'Name': this.name,
                 'Essential': 'true',
-                'Image': _this.image,
-                'Memory': _this.memory,
-                'Environment': _this.environment,
+                'Image': this.image,
+                'Memory': this.memory,
+                'Environment': this.environment,
                 'LogConfiguration': {
                     'LogDriver': 'awslogs',
                     'Options': {
                         'awslogs-group': {
-                            'Ref': _this.logGroupName
+                            'Ref': this.logGroupName
                         },
                         'awslogs-region': {
                             'Ref': 'AWS::Region'
@@ -26,8 +26,8 @@ var Service = (function () {
                     }
                 }
             };
-            if (_this.port) {
-                definition['PortMappings'] = [{ 'ContainerPort': _this.port }];
+            if (this.port) {
+                definition['PortMappings'] = [{ 'ContainerPort': this.port }];
             }
             return [definition];
         };
@@ -39,8 +39,8 @@ var Service = (function () {
         this.count = opts.count || 1;
         this.memory = opts.memory || 128;
         this.logGroupRetention = opts.log_group_retention || 7;
-        this.environment = _.map(opts.environment, function (o) {
-            var _a = _.chain(o).toPairs().flatten().value(), k = _a[0], v = _a[1];
+        this.environment = _.map(opts.environment, (o) => {
+            let [k, v] = _.chain(o).toPairs().flatten().value();
             return { Name: k, Value: v };
         });
         this.port = opts.port;
@@ -51,48 +51,32 @@ var Service = (function () {
             this.requirePort();
         this.listener = new listener_1.Listener(this, cluster);
     }
-    Service.prototype.requirePort = function () {
+    requirePort() {
         throw new TypeError('Service definition requires a Port when mapping a URL');
-    };
-    Service.prototype.requireRepository = function () {
+    }
+    requireRepository() {
         throw new TypeError('Service definition requires a Repository');
-    };
-    Service.prototype.requireTag = function () {
+    }
+    requireTag() {
         throw new TypeError('Service definition requires a Tag');
-    };
-    Service.prototype.requireURL = function () {
+    }
+    requireURL() {
         throw new TypeError('Service definition requires a URL when mapping a Port');
-    };
-    Object.defineProperty(Service.prototype, "image", {
-        get: function () {
-            return this.repository + ":" + this._name + "-" + this.tag;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Service.prototype, "taskDefinitionName", {
-        get: function () {
-            return this.name + "TaskDefinition";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Service.prototype, "logGroupName", {
-        get: function () {
-            return this.name + "CloudwatchLogGroup";
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Service.prototype, "name", {
-        get: function () {
-            return _.chain(this._service + "-" + this._name).camelCase().upperFirst().value();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Service.prototype.generate = function () {
-        var resources = this.listener.generate();
+    }
+    get image() {
+        return `${this.repository}:${this._name}-${this.tag}`;
+    }
+    get taskDefinitionName() {
+        return `${this.name}TaskDefinition`;
+    }
+    get logGroupName() {
+        return `${this.name}CloudwatchLogGroup`;
+    }
+    get name() {
+        return _.chain(`${this._service}-${this._name}`).camelCase().upperFirst().value();
+    }
+    generate() {
+        let resources = this.listener.generate();
         resources[this.name] = {
             'Type': 'AWS::ECS::Service',
             'DependsOn': ["ContainerlessListener", this.taskDefinitionName],
@@ -119,13 +103,12 @@ var Service = (function () {
             'Type': 'AWS::Logs::LogGroup',
             'Properties': {
                 'LogGroupName': {
-                    'Fn::Sub': this.name + "-${AWS::StackName}"
+                    'Fn::Sub': `${this.name}-\${AWS::StackName}`
                 },
                 'RetentionInDays': this.logGroupRetention
             }
         };
         return resources;
-    };
-    return Service;
-}());
+    }
+}
 exports.Service = Service;

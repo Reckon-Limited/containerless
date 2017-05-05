@@ -22,8 +22,7 @@ export class Cluster implements Resource {
   public subnets: string
   public vpcId: string
   public certificate: string
-  public protocol: string
-  public port: number
+  public protocol: Array<string>
 
   private _id: string
   private _securityGroup: string
@@ -55,12 +54,11 @@ export class Cluster implements Resource {
     this.vpcId = opts.vpcId || this.requireVpcId()
     this.subnets = opts.subnets || this.requireSubnets()
 
+    this.protocol = _.castArray(opts.protocol) || ['HTTP']
 
-    this.protocol = opts.protocol || 'HTTP'
-    this.port = opts.port || this.setPort()
     this.certificate = opts.certificate
 
-    if (!this.certificate && this.protocol == 'HTTPS') {
+    if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
       this.requireCertificate()
     }
   }
@@ -83,10 +81,6 @@ export class Cluster implements Resource {
 
   ami() {
     return this.amiIds[this.region];
-  }
-
-  setPort() {
-    return (this.protocol == 'HTTPS') ? 443 : 80
   }
 
   get name() {

@@ -1,6 +1,8 @@
 "use strict";
-var Cluster = (function () {
-    function Cluster(opts) {
+Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("lodash");
+class Cluster {
+    constructor(opts) {
         // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
         this.amiIds = {
             'us-east-1': 'ami-275ffe31',
@@ -32,70 +34,50 @@ var Cluster = (function () {
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
         this.subnets = opts.subnets || this.requireSubnets();
-        this.protocol = opts.protocol || 'HTTP';
-        this.port = opts.port || this.setPort();
+        this.protocol = _.castArray(opts.protocol) || ['HTTP'];
         this.certificate = opts.certificate;
-        if (!this.certificate && this.protocol == 'HTTPS') {
+        if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
             this.requireCertificate();
         }
     }
-    Cluster.prototype.requireVpcId = function () {
+    requireVpcId() {
         throw new TypeError('Cluster requires a VPC Id');
-    };
-    Cluster.prototype.requireCertificate = function () {
+    }
+    requireCertificate() {
         throw new TypeError('Cluster requires a Certificate ARN for HTTPS');
-    };
-    Cluster.prototype.requireSubnets = function () {
+    }
+    requireSubnets() {
         throw new TypeError('Cluster requires at least one Subnet Id');
-    };
-    Cluster.prototype.requireSecurityGroup = function () {
+    }
+    requireSecurityGroup() {
         throw new TypeError('Cluster requires a Security Group for mapping the Load Balancer');
-    };
-    Cluster.prototype.ami = function () {
+    }
+    ami() {
         return this.amiIds[this.region];
-    };
-    Cluster.prototype.setPort = function () {
-        return (this.protocol == 'HTTPS') ? 443 : 80;
-    };
-    Object.defineProperty(Cluster.prototype, "name", {
-        get: function () {
-            return 'Cluster';
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Cluster.prototype, "id", {
-        get: function () {
-            if (this._id) {
-                return this._id;
-            }
-            else {
-                return { 'Ref': 'ContainerlessCluster' };
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Cluster.prototype, "securityGroup", {
-        get: function () {
-            if (this._securityGroup) {
-                return this._securityGroup;
-            }
-            else {
-                return { 'Ref': 'ContainerlessSecurityGroup' };
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Cluster.prototype, "elbRole", {
-        get: function () {
-            return { 'Ref': 'ContainerlessELBRole' };
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Cluster.prototype.generate = function () {
+    }
+    get name() {
+        return 'Cluster';
+    }
+    get id() {
+        if (this._id) {
+            return this._id;
+        }
+        else {
+            return { 'Ref': 'ContainerlessCluster' };
+        }
+    }
+    get securityGroup() {
+        if (this._securityGroup) {
+            return this._securityGroup;
+        }
+        else {
+            return { 'Ref': 'ContainerlessSecurityGroup' };
+        }
+    }
+    get elbRole() {
+        return { 'Ref': 'ContainerlessELBRole' };
+    }
+    generate() {
         if (this._id)
             return {};
         return {
@@ -336,7 +318,6 @@ var Cluster = (function () {
                 }
             }
         };
-    };
-    return Cluster;
-}());
+    }
+}
 exports.Cluster = Cluster;
