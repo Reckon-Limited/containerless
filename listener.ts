@@ -87,13 +87,15 @@ export class Listener implements Resource {
   get mapping() {
     if (!this.required()) return []
 
-    return [{
-      'ContainerName': this.service.name,
-      'ContainerPort': this.service.port,
-      'TargetGroupArn': {
-        'Ref': this.targetGroupName
+    return _.map(this.cluster.protocol, (protocol) => {
+      return {
+        'ContainerName': this.service.name,
+        'ContainerPort': this.service.port,
+        'TargetGroupArn': {
+          'Ref': `${this.service.name}${protocol}Target`
+        }
       }
-    }];
+    });
 
   }
 

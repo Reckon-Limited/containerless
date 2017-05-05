@@ -15,7 +15,7 @@ export declare class Listener implements Resource {
         'ContainerName': string;
         'ContainerPort': number;
         'TargetGroupArn': {
-            'Ref': any;
+            'Ref': string;
         };
     }[];
 }

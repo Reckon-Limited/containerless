@@ -70,13 +70,15 @@ class Listener {
     get mapping() {
         if (!this.required())
             return [];
-        return [{
+        return _.map(this.cluster.protocol, (protocol) => {
+            return {
                 'ContainerName': this.service.name,
                 'ContainerPort': this.service.port,
                 'TargetGroupArn': {
-                    'Ref': this.targetGroupName
+                    'Ref': `${this.service.name}${protocol}Target`
                 }
-            }];
+            };
+        });
     }
 }
 exports.Listener = Listener;
