@@ -10,9 +10,12 @@ export declare class Service implements Resource {
     private environment;
     private listener;
     private logGroupRetention;
+    private max_size;
     private memory;
+    private min_size;
     private repository;
     private tag;
+    private threshold;
     constructor(cluster: Cluster, opts: any);
     requirePort(): void;
     requireRepository(): void;
@@ -21,6 +24,9 @@ export declare class Service implements Resource {
     readonly image: string;
     readonly taskDefinitionName: string;
     readonly logGroupName: string;
+    readonly scalingTargetName: string;
+    readonly scalingPolicyName: string;
+    readonly scalingAlarmName: string;
     readonly name: string;
     generate(): any;
     definition: () => any[];

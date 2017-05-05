@@ -163,6 +163,31 @@ export declare class Cluster implements Resource {
                 }[];
             };
         };
+        'ContainerlessASGRole': {
+            "Type": string;
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": {
+                        "Effect": string;
+                        "Principal": {
+                            "Service": string[];
+                        };
+                        "Action": string[];
+                    }[];
+                };
+                "Path": string;
+                "Policies": {
+                    "PolicyName": string;
+                    "PolicyDocument": {
+                        "Statement": {
+                            "Effect": string;
+                            "Action": string[];
+                            "Resource": string;
+                        }[];
+                    };
+                }[];
+            };
+        };
         'ClsAutoScalingGroup': {
             'Type': string;
             'CreationPolicy': {
@@ -189,6 +214,11 @@ export declare class Cluster implements Resource {
                 'MaxSize': number;
                 'MinSize': number;
                 'VPCZoneIdentifier': string;
+                'Tags': {
+                    'Key': string;
+                    'Value': string;
+                    'PropagateAtLaunch': boolean;
+                }[];
             };
         };
         'MemoryReservationScaleUpPolicy': {

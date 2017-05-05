@@ -262,6 +262,47 @@ class Cluster {
                     ]
                 }
             },
+            'ContainerlessASGRole': {
+                "Type": "AWS::IAM::Role",
+                "Properties": {
+                    "AssumeRolePolicyDocument": {
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Principal": {
+                                    "Service": [
+                                        "application-autoscaling.amazonaws.com"
+                                    ]
+                                },
+                                "Action": [
+                                    "sts:AssumeRole"
+                                ]
+                            }
+                        ]
+                    },
+                    "Path": "/",
+                    "Policies": [
+                        {
+                            "PolicyName": "service-autoscaling",
+                            "PolicyDocument": {
+                                "Statement": [
+                                    {
+                                        "Effect": "Allow",
+                                        "Action": [
+                                            "application-autoscaling:*",
+                                            "cloudwatch:DescribeAlarms",
+                                            "cloudwatch:PutMetricAlarm",
+                                            "ecs:DescribeServices",
+                                            "ecs:UpdateService"
+                                        ],
+                                        "Resource": "*"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
             'ClsAutoScalingGroup': {
                 'Type': 'AWS::AutoScaling::AutoScalingGroup',
                 'CreationPolicy': {
@@ -287,7 +328,14 @@ class Cluster {
                     },
                     'MaxSize': this.max_size,
                     'MinSize': this.min_size,
-                    'VPCZoneIdentifier': this.subnets
+                    'VPCZoneIdentifier': this.subnets,
+                    'Tags': [
+                        {
+                            'Key': 'Origin',
+                            'Value': 'Containerless',
+                            'PropagateAtLaunch': true
+                        }
+                    ]
                 }
             },
             'MemoryReservationScaleUpPolicy': {

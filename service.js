@@ -36,8 +36,11 @@ class Service {
         this._name = opts.name;
         this.tag = opts.tag || this.requireTag();
         this.repository = opts.repository || this.requireRepository();
-        this.count = opts.count || 1;
         this.memory = opts.memory || 128;
+        this.count = opts.count || 1;
+        this.min_size = opts.min_size || 1;
+        this.max_size = opts.max_size || this.min_size + 1;
+        this.threshold = opts.threshold || 10;
         this.logGroupRetention = opts.log_group_retention || 7;
         this.environment = _.map(opts.environment, (o) => {
             let [k, v] = _.chain(o).toPairs().flatten().value();
@@ -72,6 +75,15 @@ class Service {
     get logGroupName() {
         return `${this.name}CloudwatchLogGroup`;
     }
+    get scalingTargetName() {
+        return `${this.name}ScalingTarget`;
+    }
+    get scalingPolicyName() {
+        return `${this.name}ScalingPolicy`;
+    }
+    get scalingAlarmName() {
+        return `${this.name}ALBAlarm`;
+    }
     get name() {
         return _.chain(`${this._service}-${this._name}`).camelCase().upperFirst().value();
     }
@@ -103,6 +115,71 @@ class Service {
                         'Fn::Sub': `${this.name}-\${AWS::StackName}`
                     },
                     'RetentionInDays': this.logGroupRetention
+                }
+            },
+            [this.scalingTargetName]: {
+                'Type': 'AWS::ApplicationAutoScaling::ScalableTarget',
+                'DependsOn': this.name,
+                'Properties': {
+                    'MaxCapacity': this.max_size,
+                    'MinCapacity': this.min_size,
+                    'ScalableDimension': 'ecs:service:DesiredCount',
+                    'ServiceNamespace': 'ecs',
+                    'ResourceId': {
+                        'Fn::Join': [
+                            '',
+                            [
+                                'service/',
+                                { 'Ref': 'ContainerlessCluster' },
+                                '/',
+                                { 'Fn::GetAtt': [this.name, 'Name'] }
+                            ]
+                        ]
+                    },
+                    'RoleARN': { 'Fn::GetAtt': ['ContainerlessASGRole', 'Arn'] }
+                }
+            },
+            [this.scalingPolicyName]: {
+                'Type': 'AWS::ApplicationAutoScaling::ScalingPolicy',
+                'Properties': {
+                    'PolicyName': 'ServiceStepPolicy',
+                    'PolicyType': 'StepScaling',
+                    'ScalingTargetId': {
+                        'Ref': this.scalingTargetName
+                    },
+                    'StepScalingPolicyConfiguration': {
+                        'AdjustmentType': 'PercentChangeInCapacity',
+                        'Cooldown': 60,
+                        'MetricAggregationType': 'Average',
+                        'StepAdjustments': [
+                            {
+                                'MetricIntervalLowerBound': 0,
+                                'ScalingAdjustment': 200
+                            }
+                        ]
+                    }
+                }
+            },
+            [this.scalingAlarmName]: {
+                'Type': 'AWS::CloudWatch::Alarm',
+                'Properties': {
+                    'EvaluationPeriods': '1',
+                    'Statistic': 'Average',
+                    'Threshold': this.threshold,
+                    'AlarmDescription': 'ALB HTTP 500 Error Service Alarm',
+                    'Period': '60',
+                    'AlarmActions': [{ 'Ref': this.scalingPolicyName }],
+                    'Namespace': 'AWS/ApplicationELB',
+                    'Dimensions': [
+                        {
+                            'Name': 'ContainerlessService',
+                            'Value': {
+                                'Ref': this.name
+                            }
+                        }
+                    ],
+                    'ComparisonOperator': 'GreaterThanThreshold',
+                    'MetricName': 'HTTPCode_ELB_5XX_Count'
                 }
             }
         };

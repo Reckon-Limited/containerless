@@ -46,12 +46,12 @@ describe('service with port and url', () => {
     }
 
     @test listener_resource() {
-      let result = _.get(this.resources[0], 'BlahVthaDevApp1HTTPRule.Type');
+      let result = _.get(this.resources, 'BlahVthaDevApp1HTTPRule.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::ListenerRule');
     }
 
     @test task_definition_resource_type() {
-      let result = _.get(this.resources[0], 'BlahVthaDevApp1Target.Type');
+      let result = _.get(this.resources, 'BlahVthaDevApp1Target.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
     }
 

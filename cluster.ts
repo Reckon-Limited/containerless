@@ -1,4 +1,4 @@
-import _ = require('lodash');
+import * as _  from 'lodash';
 
 import { Resource } from './resource'
 
@@ -295,6 +295,47 @@ export class Cluster implements Resource {
           ]
         }
       },
+      'ContainerlessASGRole': {
+        "Type":"AWS::IAM::Role",
+        "Properties": {
+          "AssumeRolePolicyDocument": {
+            "Statement":[
+              {
+                "Effect":"Allow",
+                "Principal":{
+                  "Service":[
+                    "application-autoscaling.amazonaws.com"
+                  ]
+                },
+                "Action":[
+                  "sts:AssumeRole"
+                ]
+              }
+            ]
+          },
+          "Path":"/",
+          "Policies":[
+            {
+              "PolicyName":"service-autoscaling",
+              "PolicyDocument":{
+                "Statement":[
+                  {
+                    "Effect":"Allow",
+                    "Action":[
+                      "application-autoscaling:*",
+                      "cloudwatch:DescribeAlarms",
+                      "cloudwatch:PutMetricAlarm",
+                      "ecs:DescribeServices",
+                      "ecs:UpdateService"
+                    ],
+                    "Resource":"*"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       'ClsAutoScalingGroup': {
         'Type': 'AWS::AutoScaling::AutoScalingGroup',
         'CreationPolicy': {
@@ -320,7 +361,14 @@ export class Cluster implements Resource {
           },
           'MaxSize': this.max_size,
           'MinSize': this.min_size,
-          'VPCZoneIdentifier': this.subnets
+          'VPCZoneIdentifier': this.subnets,
+          'Tags': [
+            {
+              'Key' : 'Origin',
+              'Value': 'Containerless',
+              'PropagateAtLaunch': true
+            }
+          ]
         }
       },
       'MemoryReservationScaleUpPolicy': {
