@@ -12,7 +12,7 @@ var Listener = (function () {
     Listener.prototype.calculatePriority = function () {
         return priority = priority + 1;
     };
-    Object.defineProperty(Listener.prototype, "name", {
+    Object.defineProperty(Listener.prototype, "listenerName", {
         get: function () {
             return this.service.name + "Listener";
         },
@@ -22,6 +22,13 @@ var Listener = (function () {
     Object.defineProperty(Listener.prototype, "targetGroupName", {
         get: function () {
             return this.service.name + "Target";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Listener.prototype, "healthcheckPath", {
+        get: function () {
+            return "" + this.service.healthcheckPath;
         },
         enumerable: true,
         configurable: true
@@ -39,7 +46,7 @@ var Listener = (function () {
                 'Properties': {
                     'Name': this.targetGroupName,
                     'HealthCheckIntervalSeconds': 10,
-                    'HealthCheckPath': '/',
+                    'HealthCheckPath': this.healthcheckPath,
                     'HealthCheckProtocol': 'HTTP',
                     'HealthCheckTimeoutSeconds': 5,
                     'HealthyThresholdCount': 2,

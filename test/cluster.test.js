@@ -139,15 +139,19 @@ describe('create a new cluster with HTTP', function () {
                 ],
                 protocol: 'HTTP'
             };
+            this.clusterName = 'clsClusterName';
         }
         ClusterTest.prototype.before = function () {
-            this.cluster = new cluster_1.Cluster(this.opts);
+            this.cluster = new cluster_1.Cluster(this.opts, this.clusterName);
         };
         ClusterTest.prototype.id = function () {
             chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
         };
         ClusterTest.prototype.resources_not_empty = function () {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
+        };
+        ClusterTest.prototype.resources_cluster_name = function () {
+            chai_1.expect(this.cluster.name).to.eql('clsClusterName');
         };
         ClusterTest.prototype.sets_protocol = function () {
             chai_1.expect(this.cluster.protocol).to.eql(['HTTP']);
@@ -160,6 +164,9 @@ describe('create a new cluster with HTTP', function () {
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "resources_not_empty", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "resources_cluster_name", null);
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "sets_protocol", null);

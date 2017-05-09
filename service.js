@@ -5,6 +5,7 @@ var listener_1 = require("./listener");
 var Service = (function () {
     function Service(cluster, opts) {
         var _this = this;
+        this.DEFAULT_HEALTHCHECK_PATH = '/';
         this.definition = function () {
             var definition = {
                 'Name': _this.name,
@@ -34,6 +35,7 @@ var Service = (function () {
         };
         this.cluster = cluster;
         this._service = opts.service;
+        this._stage = opts.stage;
         this._name = opts.name;
         this.tag = opts.tag || this.requireTag();
         this.repository = opts.repository || this.requireRepository();
@@ -49,6 +51,7 @@ var Service = (function () {
         });
         this.port = opts.port;
         this.url = opts.url;
+        this.healthcheckPath = opts.healthcheckPath || this.DEFAULT_HEALTHCHECK_PATH;
         if (this.port && !this.url)
             this.requireURL();
         if (this.url && !this.port)
@@ -111,7 +114,8 @@ var Service = (function () {
     });
     Object.defineProperty(Service.prototype, "name", {
         get: function () {
-            return _.chain(this._service + "-" + this._name).camelCase().upperFirst().value();
+            var serviceStage = this._stage ? this._service + "-" + this._stage : this._service;
+            return _.chain(serviceStage + "-" + this._name).camelCase().upperFirst().value();
         },
         enumerable: true,
         configurable: true

@@ -1,14 +1,15 @@
 import { Cluster } from './cluster';
 import { Resource } from './resource';
-import { Service } from './Service';
+import { Service } from './service';
 export declare class Listener implements Resource {
     service: Service;
     cluster: Cluster;
     priority: number;
     constructor(service: Service, cluster: Cluster);
     calculatePriority(): number;
-    readonly name: string;
+    readonly listenerName: string;
     readonly targetGroupName: string;
+    readonly healthcheckPath: string;
     required(): number | "";
     generate(): any;
     generateForProtocol(protocol: string): {

@@ -19,6 +19,7 @@ export class Cluster implements Resource {
     'ca-central-1': 'ami-ee58e58a'
   }
 
+  public clusterName: string
   public subnets: string
   public vpcId: string
   public certificate: string
@@ -36,7 +37,7 @@ export class Cluster implements Resource {
   private size: number
   private max_memory_threshold: number
 
-  constructor(opts: any) {
+  constructor(opts: any, clusterName: string) {
     if (opts.id) {
       this._id = opts.id
       this._securityGroup = opts.security_group || this.requireSecurityGroup()
@@ -57,6 +58,7 @@ export class Cluster implements Resource {
     this.protocol = _.castArray(opts.protocol) || ['HTTP']
 
     this.certificate = opts.certificate
+    this.clusterName = clusterName
 
     if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
       this.requireCertificate()
@@ -94,7 +96,7 @@ export class Cluster implements Resource {
   }
 
   get name() {
-    return 'Cluster';
+    return this.clusterName;
   }
 
   get id() {
@@ -364,8 +366,12 @@ export class Cluster implements Resource {
           'VPCZoneIdentifier': this.subnets,
           'Tags': [
             {
-              'Key' : 'Origin',
+              'Key': 'Origin',
               'Value': 'Containerless',
+              'PropagateAtLaunch': true
+            }, {
+              'Key': 'Name',
+              'Value': this.name,
               'PropagateAtLaunch': true
             }
           ]

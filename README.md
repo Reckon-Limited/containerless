@@ -72,6 +72,7 @@ custom:
         - sg-000000000001
         - sg-000000000002
     repository: 000000000000.dkr.ecr.ap-southeast-2.amazonaws.com/containerless
+    stage: dev
     applications:
       hello-world
 ```
@@ -164,6 +165,7 @@ Fields:
   - src (if not provided will default to the application name)  
   - memory (defaults to 128)
   - url
+  - healthcheckPath (optional, default: `/`)
   - port
   - environment (optional array of key/values)
 
@@ -173,7 +175,7 @@ If url and port are omitted, the application will not be routed, and will be run
 
 Ports do not have to be unique, the system will dyanmically map ports to the docker container.
 
-You can use any valid AWS Application Load Balancer path pattern as the URL.
+You can use any valid AWS Application Load Balancer path pattern as the URL. You can also provide path for your application healthcheck (default `/`).
 
 Only one application can be mounted to the root url '/', because of the way in which the load balancer routes paths.
 Other applications will be routed based on a pattern, and you will need to remember to mount your application on that route as the load balancer forwards the whole url.
@@ -192,6 +194,7 @@ custom:
       hello-2:
         src: src-2
         url: /hello
+        healthcheckPath: /_health
         port: 3000
         environment:  
           - KEY: 'value'

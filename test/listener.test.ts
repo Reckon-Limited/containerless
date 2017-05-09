@@ -28,6 +28,7 @@ describe('service with port and url', () => {
       repository: 'blah/vtha',
       tag: 'tag-1',
       url: '/',
+      healthcheckPath: '/_health',
       port: 1111
     }
 
@@ -53,6 +54,11 @@ describe('service with port and url', () => {
     @test task_definition_resource_type() {
       let result = _.get(this.resources, 'BlahVthaDevApp1Target.Type');
       expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
+    }
+
+    @test task_definition_resource_healthCheckPath() {
+      let result = _.get(this.resources, 'BlahVthaDevApp1Target.Properties.HealthCheckPath');
+      expect(result).to.eql('/_health');
     }
 
     @test priority() {

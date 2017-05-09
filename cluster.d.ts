@@ -1,6 +1,7 @@
 import { Resource } from './resource';
 export declare class Cluster implements Resource {
     amiIds: any;
+    name: string;
     subnets: string;
     vpcId: string;
     certificate: string;
@@ -15,7 +16,7 @@ export declare class Cluster implements Resource {
     private region;
     private size;
     private max_memory_threshold;
-    constructor(opts: any);
+    constructor(opts: any, clusterName: string);
     readonly defaultListenerName: string;
     readonly defaultTargetGroupName: string;
     requireVpcId(): void;
@@ -23,7 +24,7 @@ export declare class Cluster implements Resource {
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
-    readonly name: string;
+    readonly clusterName: string;
     readonly id: string | {
         'Ref': string;
     };

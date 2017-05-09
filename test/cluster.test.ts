@@ -118,9 +118,12 @@ describe('create a new cluster with HTTP', () => {
       protocol: 'HTTP'
     }
 
+    clusterName = 'clsClusterName'
+
     cluster:Cluster
+
     before() {
-      this.cluster = new Cluster(this.opts);
+      this.cluster = new Cluster(this.opts, this.clusterName);
     }
 
     @test id() {
@@ -129,6 +132,10 @@ describe('create a new cluster with HTTP', () => {
 
     @test resources_not_empty(){
       expect(this.cluster.generate()).to.not.be.empty
+    }
+
+    @test resources_cluster_name(){
+      expect(this.cluster.name).to.eql('clsClusterName')
     }
 
     @test sets_protocol(){

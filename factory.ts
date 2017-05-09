@@ -6,11 +6,13 @@ import { Resource } from './resource'
 import { Service } from './service'
 
 export function prepare(tag:string, opts:any): Array<Resource> {
-  let cluster = new Cluster(opts.cluster) ;
-  let elb = new ELB(cluster);
+  const serviceStage = opts.stage ? `${opts.service}-${opts.stage}` : opts.service;
 
-  let applications = _.map(opts.applications, (app:any, name: string) => {
-    let o = _.merge({}, { service: opts.service, name: name, path: opts.path, repository: opts.repository, tag: tag}, app);
+  const cluster = new Cluster(opts.cluster, serviceStage);
+  const elb = new ELB(cluster);
+
+  const applications = _.map(opts.applications, (app:any, name: string) => {
+    const o = _.merge({}, { service: opts.service, stage: opts.stage, name: name, path: opts.path, repository: opts.repository, tag: tag}, app);
     return new Service(cluster, o);
   });
 

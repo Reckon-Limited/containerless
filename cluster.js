@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var Cluster = (function () {
-    function Cluster(opts) {
+    function Cluster(opts, clusterName) {
         // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
         this.amiIds = {
             'us-east-1': 'ami-275ffe31',
@@ -36,6 +36,7 @@ var Cluster = (function () {
         this.subnets = opts.subnets || this.requireSubnets();
         this.protocol = _.castArray(opts.protocol) || ['HTTP'];
         this.certificate = opts.certificate;
+        this.name = clusterName;
         if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
             this.requireCertificate();
         }
@@ -71,9 +72,9 @@ var Cluster = (function () {
     Cluster.prototype.ami = function () {
         return this.amiIds[this.region];
     };
-    Object.defineProperty(Cluster.prototype, "name", {
+    Object.defineProperty(Cluster.prototype, "clusterName", {
         get: function () {
-            return 'Cluster';
+            return this.name;
         },
         enumerable: true,
         configurable: true
@@ -357,6 +358,10 @@ var Cluster = (function () {
                         {
                             'Key': 'Origin',
                             'Value': 'Containerless',
+                            'PropagateAtLaunch': true
+                        }, {
+                            'Key': 'Name',
+                            'Value': this.clusterName,
                             'PropagateAtLaunch': true
                         }
                     ]

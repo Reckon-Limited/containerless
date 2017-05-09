@@ -1,10 +1,13 @@
 import { Cluster } from './cluster';
 import { Resource } from './resource';
 export declare class Service implements Resource {
+    private DEFAULT_HEALTHCHECK_PATH;
     port: number;
     url: string;
+    healthcheckPath: string;
     private _name;
     private _service;
+    private _stage;
     private cluster;
     private count;
     private environment;
