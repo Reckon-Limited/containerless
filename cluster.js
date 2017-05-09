@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const _ = require("lodash");
-class Cluster {
-    constructor(opts) {
+var _ = require("lodash");
+var Cluster = (function () {
+    function Cluster(opts) {
         // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
         this.amiIds = {
             'us-east-1': 'ami-275ffe31',
@@ -40,52 +40,76 @@ class Cluster {
             this.requireCertificate();
         }
     }
-    get defaultListenerName() {
-        let protocol = _.first(this.protocol);
-        return `Cls${protocol}Listener`;
-    }
-    get defaultTargetGroupName() {
-        let protocol = _.first(this.protocol);
-        return `Cls${protocol}TargetGroup`;
-    }
-    requireVpcId() {
+    Object.defineProperty(Cluster.prototype, "defaultListenerName", {
+        get: function () {
+            var protocol = _.first(this.protocol);
+            return "Cls" + protocol + "Listener";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Cluster.prototype, "defaultTargetGroupName", {
+        get: function () {
+            var protocol = _.first(this.protocol);
+            return "Cls" + protocol + "TargetGroup";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Cluster.prototype.requireVpcId = function () {
         throw new TypeError('Cluster requires a VPC Id');
-    }
-    requireCertificate() {
+    };
+    Cluster.prototype.requireCertificate = function () {
         throw new TypeError('Cluster requires a Certificate ARN for HTTPS');
-    }
-    requireSubnets() {
+    };
+    Cluster.prototype.requireSubnets = function () {
         throw new TypeError('Cluster requires at least one Subnet Id');
-    }
-    requireSecurityGroup() {
+    };
+    Cluster.prototype.requireSecurityGroup = function () {
         throw new TypeError('Cluster requires a Security Group for mapping the Load Balancer');
-    }
-    ami() {
+    };
+    Cluster.prototype.ami = function () {
         return this.amiIds[this.region];
-    }
-    get name() {
-        return 'Cluster';
-    }
-    get id() {
-        if (this._id) {
-            return this._id;
-        }
-        else {
-            return { 'Ref': 'ClsCluster' };
-        }
-    }
-    get securityGroup() {
-        if (this._securityGroup) {
-            return this._securityGroup;
-        }
-        else {
-            return { 'Ref': 'ClsSecurityGroup' };
-        }
-    }
-    get elbRole() {
-        return { 'Ref': 'ClsELBRole' };
-    }
-    generate() {
+    };
+    Object.defineProperty(Cluster.prototype, "name", {
+        get: function () {
+            return 'Cluster';
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Cluster.prototype, "id", {
+        get: function () {
+            if (this._id) {
+                return this._id;
+            }
+            else {
+                return { 'Ref': 'ClsCluster' };
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Cluster.prototype, "securityGroup", {
+        get: function () {
+            if (this._securityGroup) {
+                return this._securityGroup;
+            }
+            else {
+                return { 'Ref': 'ClsSecurityGroup' };
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Cluster.prototype, "elbRole", {
+        get: function () {
+            return { 'Ref': 'ClsELBRole' };
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Cluster.prototype.generate = function () {
         if (this._id)
             return {};
         return {
@@ -374,6 +398,7 @@ class Cluster {
                 }
             }
         };
-    }
-}
+    };
+    return Cluster;
+}());
 exports.Cluster = Cluster;

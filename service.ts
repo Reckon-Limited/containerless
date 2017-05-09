@@ -203,7 +203,7 @@ export class Service implements Resource {
 
     let listeners = this.listener.generate();
 
-    return Object.assign(resources, listeners);;
+    return _.assign(resources, listeners);;
   }
 
   definition = () => {

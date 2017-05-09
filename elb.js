@@ -1,19 +1,24 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const _ = require("lodash");
-class ELB {
-    constructor(cluster) {
+var _ = require("lodash");
+var ELB = (function () {
+    function ELB(cluster) {
         this.PORTS = {
             'HTTP': 80,
             'HTTPS': 443,
         };
         this.cluster = cluster;
     }
-    get name() {
-        return 'ELB';
-    }
-    generate() {
-        let definition = {
+    Object.defineProperty(ELB.prototype, "name", {
+        get: function () {
+            return 'ELB';
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ELB.prototype.generate = function () {
+        var _this = this;
+        var definition = {
             'ClsELB': {
                 'Type': 'AWS::ElasticLoadBalancingV2::LoadBalancer',
                 'Properties': {
@@ -29,14 +34,14 @@ class ELB {
                 }
             }
         };
-        let listeners = _.map(this.cluster.protocol, (protocol) => {
-            return this.generateListener(protocol);
+        var listeners = _.map(this.cluster.protocol, function (protocol) {
+            return _this.generateListener(protocol);
         });
-        return Object.assign(definition, ...listeners);
-    }
-    generateListener(protocol) {
-        let definition = {
-            [`Cls${protocol}Listener`]: {
+        return _.assign.apply(_, [definition].concat(listeners));
+    };
+    ELB.prototype.generateListener = function (protocol) {
+        var definition = (_a = {},
+            _a["Cls" + protocol + "Listener"] = {
                 'Type': 'AWS::ElasticLoadBalancingV2::Listener',
                 "DependsOn": 'ClsELB',
                 'Properties': {
@@ -45,7 +50,7 @@ class ELB {
                         {
                             'Type': 'forward',
                             'TargetGroupArn': {
-                                'Ref': `Cls${protocol}TargetGroup`
+                                'Ref': "Cls" + protocol + "TargetGroup"
                             }
                         }
                     ],
@@ -56,7 +61,7 @@ class ELB {
                     'Protocol': protocol
                 }
             },
-            [`Cls${protocol}TargetGroup`]: {
+            _a["Cls" + protocol + "TargetGroup"] = {
                 'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
                 'DependsOn': 'ClsELB',
                 'Properties': {
@@ -64,12 +69,14 @@ class ELB {
                     'Protocol': protocol,
                     'VpcId': this.cluster.vpcId
                 }
-            }
-        };
+            },
+            _a);
         if (protocol == 'HTTPS') {
-            definition[`Cls${protocol}Listener`].Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
+            definition["Cls" + protocol + "Listener"].Properties.Certificates = [{ 'CertificateArn': this.cluster.certificate }];
         }
         return definition;
-    }
-}
+        var _a;
+    };
+    return ELB;
+}());
 exports.ELB = ELB;

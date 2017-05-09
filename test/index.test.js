@@ -6,22 +6,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mocha_typescript_1 = require("mocha-typescript");
-const ServerlecsPlugin = require("../index");
-const _ = require("lodash");
-const app = {
+var mocha_typescript_1 = require("mocha-typescript");
+var ServerlecsPlugin = require("../index");
+var _ = require("lodash");
+var app = {
     name: 'Container',
     load_balancer: {
         subnets: 'blah-vtha'
     }
 };
-const otherApp = {
+var otherApp = {
     name: 'Container',
     load_balancer: {
         subnets: 'blah-vtha'
     }
 };
-const containerless = {
+var containerless = {
     name: 'Blah',
     repository: 'blah/vtha',
     clusterId: 'arn:blah:vtha',
@@ -30,16 +30,19 @@ const containerless = {
     },
     applications: [app, otherApp]
 };
-let ServerlecsPluginTest = class ServerlecsPluginTest {
-    before() {
-        let serverless = {};
+var ServerlecsPluginTest = (function () {
+    function ServerlecsPluginTest() {
+    }
+    ServerlecsPluginTest.prototype.before = function () {
+        var serverless = {};
         _.set(serverless, 'service.custom.containerless', containerless);
         _.set(serverless, 'processedInput.options.tag', 'tag');
         _.set(serverless, 'config.servicePath', '/blah/vtha');
-        _.set(serverless, 'cli.log', () => { });
+        _.set(serverless, 'cli.log', function () { });
         this.plugin = new ServerlecsPlugin(serverless, {});
-    }
-};
+    };
+    return ServerlecsPluginTest;
+}());
 ServerlecsPluginTest = __decorate([
     mocha_typescript_1.suite
 ], ServerlecsPluginTest);
