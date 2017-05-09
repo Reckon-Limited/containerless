@@ -5,6 +5,6 @@ export declare class ELB implements Resource {
     private PORTS;
     constructor(cluster: Cluster);
     readonly name: string;
-    generate(): any;
+    generate(): {};
     generateListener(protocol: string): any;
 }

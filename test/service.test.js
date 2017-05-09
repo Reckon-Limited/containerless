@@ -6,14 +6,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mocha_typescript_1 = require("mocha-typescript");
-const chai_1 = require("chai");
-const cluster_1 = require("../cluster");
-const service_1 = require("../service");
-const _ = require("lodash");
-describe('with an existing cluster and a load balanced container', () => {
-    let ServiceTest = class ServiceTest {
-        constructor() {
+var mocha_typescript_1 = require("mocha-typescript");
+var chai_1 = require("chai");
+var cluster_1 = require("../cluster");
+var service_1 = require("../service");
+var _ = require("lodash");
+describe('with an existing cluster and a load balanced container', function () {
+    var ServiceTest = (function () {
+        function ServiceTest() {
             this.cluster = {
                 id: 'arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N',
                 security_group: 'sg-abcdef',
@@ -36,43 +36,44 @@ describe('with an existing cluster and a load balanced container', () => {
                 ]
             };
         }
-        before() {
-            let cluster = new cluster_1.Cluster(this.cluster);
+        ServiceTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.cluster);
             this.service = new service_1.Service(cluster, this.opts);
             this.resources = this.service.generate();
-        }
-        service_name() {
+        };
+        ServiceTest.prototype.service_name = function () {
             chai_1.expect(this.service.name).to.eql('BlahVthaDevApp1');
-        }
-        service_resource() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1.Type');
+        };
+        ServiceTest.prototype.service_resource = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Type');
             chai_1.expect(result).to.eql('AWS::ECS::Service');
-        }
-        task_definition_resource_type() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Type');
+        };
+        ServiceTest.prototype.task_definition_resource_type = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Type');
             chai_1.expect(result).to.eql('AWS::ECS::TaskDefinition');
-        }
-        task_definition_resource() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Name');
+        };
+        ServiceTest.prototype.task_definition_resource = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Name');
             chai_1.expect(result).to.eql('BlahVthaDevApp1');
-        }
-        environment_variables() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+        };
+        ServiceTest.prototype.environment_variables = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
             chai_1.expect(result).to.eql([{ Name: 'blah', Value: 'vtha' }]);
-        }
-        port_mappings() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].PortMappings');
+        };
+        ServiceTest.prototype.port_mappings = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].PortMappings');
             chai_1.expect(result).to.eql([{ 'ContainerPort': 1111 }]);
-        }
-        service_role() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
+        };
+        ServiceTest.prototype.service_role = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role.Ref');
             chai_1.expect(result).to.eql('ClsELBRole');
-        }
-        service_load_balancers() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
+        };
+        ServiceTest.prototype.service_load_balancers = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
             chai_1.expect(result).to.not.be.empty;
-        }
-    };
+        };
+        return ServiceTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_name", null);
@@ -101,9 +102,9 @@ describe('with an existing cluster and a load balanced container', () => {
         mocha_typescript_1.suite
     ], ServiceTest);
 });
-describe('new cluster and container without load balancer', () => {
-    let ServiceTest = class ServiceTest {
-        constructor() {
+describe('new cluster and container without load balancer', function () {
+    var ServiceTest = (function () {
+        function ServiceTest() {
             this.cluster = {
                 vpcId: 'vpc-1',
                 subnets: [
@@ -119,27 +120,28 @@ describe('new cluster and container without load balancer', () => {
                 tag: 'tag-1',
             };
         }
-        before() {
-            let cluster = new cluster_1.Cluster(this.cluster);
+        ServiceTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.cluster);
             this.service = new service_1.Service(cluster, this.opts);
             this.resources = this.service.generate();
-        }
-        service_name() {
+        };
+        ServiceTest.prototype.service_name = function () {
             chai_1.expect(this.service.name).to.eql('BlahVthaDevApp1');
-        }
-        service_load_balancers() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
+        };
+        ServiceTest.prototype.service_load_balancers = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
             chai_1.expect(result).to.be.empty;
-        }
-        service_role_undefined() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role');
+        };
+        ServiceTest.prototype.service_role_undefined = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.Role');
             chai_1.expect(result).to.be.undefined;
-        }
-        environment_variables() {
-            let result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
+        };
+        ServiceTest.prototype.environment_variables = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1TaskDefinition.Properties.ContainerDefinitions[0].Environment');
             chai_1.expect(result).to.be.empty;
-        }
-    };
+        };
+        return ServiceTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_name", null);

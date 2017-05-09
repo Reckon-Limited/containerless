@@ -42,7 +42,7 @@ export class ELB implements Resource {
       return this.generateListener(protocol)
     })
 
-    return Object.assign(definition, ...listeners);
+    return _.assign(definition, ...listeners);
   }
 
   generateListener(protocol: string) {

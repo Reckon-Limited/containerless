@@ -6,12 +6,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mocha_typescript_1 = require("mocha-typescript");
-const chai_1 = require("chai");
-const cluster_1 = require("../cluster");
-describe('with existing cluster', () => {
-    let ClusterTest = class ClusterTest {
-        constructor() {
+var mocha_typescript_1 = require("mocha-typescript");
+var chai_1 = require("chai");
+var cluster_1 = require("../cluster");
+describe('with existing cluster', function () {
+    var ClusterTest = (function () {
+        function ClusterTest() {
             this.opts = {
                 id: 'arn:aws:ecs:ap-southeast-2:005213230316:cluster/vtha-ECSCluster-1A5ZYNUN7X46N',
                 security_group: 'sg-abcdef',
@@ -23,16 +23,17 @@ describe('with existing cluster', () => {
                 ]
             };
         }
-        before() {
+        ClusterTest.prototype.before = function () {
             this.cluster = new cluster_1.Cluster(this.opts);
-        }
-        id() {
+        };
+        ClusterTest.prototype.id = function () {
             chai_1.expect(this.cluster.id).to.eq(this.opts.id);
-        }
-        resources_empty() {
+        };
+        ClusterTest.prototype.resources_empty = function () {
             chai_1.expect(this.cluster.generate()).to.be.empty;
-        }
-    };
+        };
+        return ClusterTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "id", null);
@@ -43,9 +44,9 @@ describe('with existing cluster', () => {
         mocha_typescript_1.suite
     ], ClusterTest);
 });
-describe('create a new cluster with HTTPS', () => {
-    let ClusterTest = class ClusterTest {
-        constructor() {
+describe('create a new cluster with HTTPS', function () {
+    var ClusterTest = (function () {
+        function ClusterTest() {
             this.opts = {
                 vpcId: 'vpc-1',
                 subnets: [
@@ -57,19 +58,20 @@ describe('create a new cluster with HTTPS', () => {
                 certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
             };
         }
-        before() {
+        ClusterTest.prototype.before = function () {
             this.cluster = new cluster_1.Cluster(this.opts);
-        }
-        id() {
+        };
+        ClusterTest.prototype.id = function () {
             chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
-        }
-        resources_not_empty() {
+        };
+        ClusterTest.prototype.resources_not_empty = function () {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
-        }
-        sets_protocol() {
+        };
+        ClusterTest.prototype.sets_protocol = function () {
             chai_1.expect(this.cluster.protocol).to.eql(['HTTPS']);
-        }
-    };
+        };
+        return ClusterTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "id", null);
@@ -83,9 +85,9 @@ describe('create a new cluster with HTTPS', () => {
         mocha_typescript_1.suite
     ], ClusterTest);
 });
-describe('create a new cluster with both HTTP and HTTPS', () => {
-    let ClusterTest = class ClusterTest {
-        constructor() {
+describe('create a new cluster with both HTTP and HTTPS', function () {
+    var ClusterTest = (function () {
+        function ClusterTest() {
             this.opts = {
                 vpcId: 'vpc-1',
                 subnets: [
@@ -97,20 +99,21 @@ describe('create a new cluster with both HTTP and HTTPS', () => {
                 certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
             };
         }
-        before() {
+        ClusterTest.prototype.before = function () {
             this.cluster = new cluster_1.Cluster(this.opts);
-        }
-        id() {
+        };
+        ClusterTest.prototype.id = function () {
             chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
-        }
-        resources_not_empty() {
+        };
+        ClusterTest.prototype.resources_not_empty = function () {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
-        }
-        sets_protocol() {
+        };
+        ClusterTest.prototype.sets_protocol = function () {
             console.log(this.cluster.protocol);
             chai_1.expect(this.cluster.protocol).to.eql(['HTTP', 'HTTPS']);
-        }
-    };
+        };
+        return ClusterTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "id", null);
@@ -124,9 +127,9 @@ describe('create a new cluster with both HTTP and HTTPS', () => {
         mocha_typescript_1.suite
     ], ClusterTest);
 });
-describe('create a new cluster with HTTP', () => {
-    let ClusterTest = class ClusterTest {
-        constructor() {
+describe('create a new cluster with HTTP', function () {
+    var ClusterTest = (function () {
+        function ClusterTest() {
             this.opts = {
                 vpcId: 'vpc-1',
                 subnets: [
@@ -137,19 +140,20 @@ describe('create a new cluster with HTTP', () => {
                 protocol: 'HTTP'
             };
         }
-        before() {
+        ClusterTest.prototype.before = function () {
             this.cluster = new cluster_1.Cluster(this.opts);
-        }
-        id() {
+        };
+        ClusterTest.prototype.id = function () {
             chai_1.expect(this.cluster.id).to.eql({ 'Ref': 'ClsCluster' });
-        }
-        resources_not_empty() {
+        };
+        ClusterTest.prototype.resources_not_empty = function () {
             chai_1.expect(this.cluster.generate()).to.not.be.empty;
-        }
-        sets_protocol() {
+        };
+        ClusterTest.prototype.sets_protocol = function () {
             chai_1.expect(this.cluster.protocol).to.eql(['HTTP']);
-        }
-    };
+        };
+        return ClusterTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "id", null);

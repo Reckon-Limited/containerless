@@ -6,14 +6,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mocha_typescript_1 = require("mocha-typescript");
-const chai_1 = require("chai");
-const cluster_1 = require("../cluster");
-const elb_1 = require("../elb");
-const _ = require("lodash");
-describe('with an existing cluster', () => {
-    let ELBTest = class ELBTest {
-        constructor() {
+var mocha_typescript_1 = require("mocha-typescript");
+var chai_1 = require("chai");
+var cluster_1 = require("../cluster");
+var elb_1 = require("../elb");
+var _ = require("lodash");
+describe('with an existing cluster', function () {
+    var ELBTest = (function () {
+        function ELBTest() {
             this.opts = {
                 id: 'arn:aws:ecs:ap-southeast-2:000000000001:cluster/ECSCluster-XXXXXXXXXXXXX',
                 security_group: 'sg-abcdef',
@@ -26,28 +26,29 @@ describe('with an existing cluster', () => {
                 ]
             };
         }
-        before() {
-            let cluster = new cluster_1.Cluster(this.opts);
+        ELBTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.opts);
             this.elb = new elb_1.ELB(cluster);
             this.resources = this.elb.generate();
-        }
-        elb_resource() {
-            let result = _.get(this.resources, 'ClsELB.Type');
+        };
+        ELBTest.prototype.elb_resource = function () {
+            var result = _.get(this.resources, 'ClsELB.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer');
-        }
-        elb_resource_security_group() {
-            let result = _.get(this.resources, 'ClsELB.Properties.SecurityGroups');
+        };
+        ELBTest.prototype.elb_resource_security_group = function () {
+            var result = _.get(this.resources, 'ClsELB.Properties.SecurityGroups');
             chai_1.expect(result).to.eql([this.opts.security_group]);
-        }
-        elb_resource_subnets() {
-            let result = _.get(this.resources, 'ClsELB.Properties.Subnets');
+        };
+        ELBTest.prototype.elb_resource_subnets = function () {
+            var result = _.get(this.resources, 'ClsELB.Properties.Subnets');
             chai_1.expect(result).to.eql(this.opts.subnets);
-        }
-        elb_resource_vpcId() {
-            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
+        };
+        ELBTest.prototype.elb_resource_vpcId = function () {
+            var result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
             chai_1.expect(result).to.eql(this.opts.vpcId);
-        }
-    };
+        };
+        return ELBTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ELBTest.prototype, "elb_resource", null);
@@ -64,9 +65,9 @@ describe('with an existing cluster', () => {
         mocha_typescript_1.suite
     ], ELBTest);
 });
-describe('creating a new cluster with HTTP and HTTPS', () => {
-    let ELBTest = class ELBTest {
-        constructor() {
+describe('creating a new cluster with HTTP and HTTPS', function () {
+    var ELBTest = (function () {
+        function ELBTest() {
             this.opts = {
                 vpcId: 'vpc-1',
                 subnets: [
@@ -78,20 +79,21 @@ describe('creating a new cluster with HTTP and HTTPS', () => {
                 certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
             };
         }
-        before() {
-            let cluster = new cluster_1.Cluster(this.opts);
+        ELBTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.opts);
             this.elb = new elb_1.ELB(cluster);
             this.resources = this.elb.generate();
-        }
-        generates_http_listener() {
-            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
+        };
+        ELBTest.prototype.generates_http_listener = function () {
+            var result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
             chai_1.expect(result).to.eql(80);
-        }
-        generates_https_listener() {
-            let result = _.get(this.resources, 'ClsHTTPSTargetGroup.Properties.Port');
+        };
+        ELBTest.prototype.generates_https_listener = function () {
+            var result = _.get(this.resources, 'ClsHTTPSTargetGroup.Properties.Port');
             chai_1.expect(result).to.eql(443);
-        }
-    };
+        };
+        return ELBTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ELBTest.prototype, "generates_http_listener", null);
@@ -102,9 +104,9 @@ describe('creating a new cluster with HTTP and HTTPS', () => {
         mocha_typescript_1.suite
     ], ELBTest);
 });
-describe('creating a new cluster with HTTP', () => {
-    let ELBTest = class ELBTest {
-        constructor() {
+describe('creating a new cluster with HTTP', function () {
+    var ELBTest = (function () {
+        function ELBTest() {
             this.opts = {
                 vpcId: 'vpc-1',
                 subnets: [
@@ -115,32 +117,33 @@ describe('creating a new cluster with HTTP', () => {
                 protocol: ['HTTP'],
             };
         }
-        before() {
-            let cluster = new cluster_1.Cluster(this.opts);
+        ELBTest.prototype.before = function () {
+            var cluster = new cluster_1.Cluster(this.opts);
             this.elb = new elb_1.ELB(cluster);
             this.resources = this.elb.generate();
-        }
-        elb_resource() {
-            let result = _.get(this.resources, 'ClsELB.Type');
+        };
+        ELBTest.prototype.elb_resource = function () {
+            var result = _.get(this.resources, 'ClsELB.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::LoadBalancer');
-        }
-        elb_listener_certificate() {
-            let result = _.get(this.resources, 'ClsHTTPListener.Properties.Certificates[0].CertificateArn');
+        };
+        ELBTest.prototype.elb_listener_certificate = function () {
+            var result = _.get(this.resources, 'ClsHTTPListener.Properties.Certificates[0].CertificateArn');
             chai_1.expect(result).to.be.empty;
-        }
-        elb_resource_subnets() {
-            let result = _.get(this.resources, 'ClsELB.Properties.Subnets');
+        };
+        ELBTest.prototype.elb_resource_subnets = function () {
+            var result = _.get(this.resources, 'ClsELB.Properties.Subnets');
             chai_1.expect(result).to.eql(this.opts.subnets);
-        }
-        elb_resource_vpcId() {
-            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
+        };
+        ELBTest.prototype.elb_resource_vpcId = function () {
+            var result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.VpcId');
             chai_1.expect(result).to.eql(this.opts.vpcId);
-        }
-        generates_http_listener() {
-            let result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
+        };
+        ELBTest.prototype.generates_http_listener = function () {
+            var result = _.get(this.resources, 'ClsHTTPTargetGroup.Properties.Port');
             chai_1.expect(result).to.eql(80);
-        }
-    };
+        };
+        return ELBTest;
+    }());
     __decorate([
         mocha_typescript_1.test
     ], ELBTest.prototype, "elb_resource", null);

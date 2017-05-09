@@ -7,8 +7,6 @@ import { ELB } from '../elb'
 
 import * as _ from 'lodash';
 
-
-
 declare function describe(desc: string, cb: Function):any
 
 describe('with an existing cluster', () => {
@@ -87,8 +85,8 @@ describe('creating a new cluster with HTTP and HTTPS', () => {
       let result = _.get(this.resources, 'ClsHTTPSTargetGroup.Properties.Port');
       expect(result).to.eql(443)
     }
+  }
 });
-
 
 describe('creating a new cluster with HTTP', () => {
   @suite class ELBTest {

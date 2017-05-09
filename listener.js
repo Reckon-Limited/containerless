@@ -1,31 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const _ = require("lodash");
+var _ = require("lodash");
 // this is a terrible idea
-let priority = 0;
-class Listener {
-    constructor(service, cluster) {
+var priority = 0;
+var Listener = (function () {
+    function Listener(service, cluster) {
         this.service = service;
         this.cluster = cluster;
         this.priority = this.calculatePriority();
     }
-    calculatePriority() {
+    Listener.prototype.calculatePriority = function () {
         return priority = priority + 1;
-    }
-    get name() {
-        return `${this.service.name}Listener`;
-    }
-    get targetGroupName() {
-        return `${this.service.name}Target`;
-    }
-    required() {
+    };
+    Object.defineProperty(Listener.prototype, "name", {
+        get: function () {
+            return this.service.name + "Listener";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Listener.prototype, "targetGroupName", {
+        get: function () {
+            return this.service.name + "Target";
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Listener.prototype.required = function () {
         return (this.service.url && this.service.port);
-    }
-    generate() {
+    };
+    Listener.prototype.generate = function () {
+        var _this = this;
         if (!this.required())
             return [];
-        let definition = {
-            [this.targetGroupName]: {
+        var definition = (_a = {},
+            _a[this.targetGroupName] = {
                 'Type': 'AWS::ElasticLoadBalancingV2::TargetGroup',
                 'Properties': {
                     'Name': this.targetGroupName,
@@ -39,17 +48,18 @@ class Listener {
                     'UnhealthyThresholdCount': 2,
                     'VpcId': this.cluster.vpcId
                 }
-            }
-        };
-        _.each(this.cluster.protocol, (protocol) => {
-            definition[`${this.service.name}${protocol}Rule`] = this.generateForProtocol(protocol);
+            },
+            _a);
+        _.each(this.cluster.protocol, function (protocol) {
+            definition["" + _this.service.name + protocol + "Rule"] = _this.generateForProtocol(protocol);
         });
         return definition;
-    }
-    generateForProtocol(protocol) {
+        var _a;
+    };
+    Listener.prototype.generateForProtocol = function (protocol) {
         return {
             'Type': 'AWS::ElasticLoadBalancingV2::ListenerRule',
-            "DependsOn": [`Cls${protocol}Listener`, `Cls${protocol}TargetGroup`, this.targetGroupName],
+            "DependsOn": ["Cls" + protocol + "Listener", "Cls" + protocol + "TargetGroup", this.targetGroupName],
             'Properties': {
                 'Actions': [
                     {
@@ -63,23 +73,28 @@ class Listener {
                         'Values': [this.service.url]
                     }
                 ],
-                'ListenerArn': { 'Ref': `Cls${protocol}Listener` },
+                'ListenerArn': { 'Ref': "Cls" + protocol + "Listener" },
                 'Priority': this.priority
             }
         };
-    }
-    get mapping() {
-        if (!this.required())
-            return [];
-        return [{
-                'ContainerName': this.service.name,
-                'ContainerPort': this.service.port,
-                'TargetGroupArn': {
-                    'Ref': this.targetGroupName
-                }
-            }];
-    }
-}
+    };
+    Object.defineProperty(Listener.prototype, "mapping", {
+        get: function () {
+            if (!this.required())
+                return [];
+            return [{
+                    'ContainerName': this.service.name,
+                    'ContainerPort': this.service.port,
+                    'TargetGroupArn': {
+                        'Ref': this.targetGroupName
+                    }
+                }];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return Listener;
+}());
 exports.Listener = Listener;
 function reset() {
     priority = 0;
