@@ -54,6 +54,11 @@ describe('create a new cluster with HTTPS', function () {
                     'subnet-b442c0d0',
                     'subnet-a2b967fb'
                 ],
+                privateSubnets: [
+                    'privateSubnet-12359e64',
+                    'privateSubnet-b442c0d0',
+                    'privateSubnet-a2b967fb'
+                ],
                 protocol: 'HTTPS',
                 certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
             };
@@ -70,6 +75,9 @@ describe('create a new cluster with HTTPS', function () {
         ClusterTest.prototype.sets_protocol = function () {
             chai_1.expect(this.cluster.protocol).to.eql(['HTTPS']);
         };
+        ClusterTest.prototype.sets_privateSubnets = function () {
+            chai_1.expect(this.cluster.privateSubnets).to.eql(this.opts.privateSubnets);
+        };
         return ClusterTest;
     }());
     __decorate([
@@ -81,6 +89,9 @@ describe('create a new cluster with HTTPS', function () {
     __decorate([
         mocha_typescript_1.test
     ], ClusterTest.prototype, "sets_protocol", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ClusterTest.prototype, "sets_privateSubnets", null);
     ClusterTest = __decorate([
         mocha_typescript_1.suite
     ], ClusterTest);

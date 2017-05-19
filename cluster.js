@@ -34,6 +34,9 @@ var Cluster = (function () {
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
         this.subnets = opts.subnets || this.requireSubnets();
+        if (opts.privateSubnets) {
+            this.privateSubnets = opts.privateSubnets;
+        }
         this.protocol = _.castArray(opts.protocol) || ['HTTP'];
         this.certificate = opts.certificate;
         this.clusterName = clusterName;
@@ -353,7 +356,7 @@ var Cluster = (function () {
                     },
                     'MaxSize': this.max_size,
                     'MinSize': this.min_size,
-                    'VPCZoneIdentifier': this.subnets,
+                    'VPCZoneIdentifier': this.privateSubnets || this.subnets,
                     'Tags': [
                         {
                             'Key': 'Origin',
