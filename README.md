@@ -86,6 +86,7 @@ Required fields:
 
 A vpcId and one or more subnets in that VPC are required.
 If using an existing cluster, provide the VPC and subnets that the cluster has been created in.
+You can also use privateSubnets option (example below).
 
 If you need to define a VPC, a sample CloudFormation template is provided in `examples/vpc.cfn.yml`.
 You can use the
@@ -138,8 +139,13 @@ custom:
       subnets:
         - sg-000000000001
         - sg-000000000002
+      privateSubnets:
+        - sg-000000000001
+        - sg-000000000002
     repository: 000000000000.dkr.ecr.ap-southeast-2.amazonaws.com/containerless
 ```
+
+If you need you can also use privateSubnets option. Example below.
 
 ### Load Balancer ###
 

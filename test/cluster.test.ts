@@ -47,6 +47,11 @@ describe('create a new cluster with HTTPS', () => {
         'subnet-b442c0d0',
         'subnet-a2b967fb'
       ],
+      privateSubnets: [
+        'privateSubnet-12359e64',
+        'privateSubnet-b442c0d0',
+        'privateSubnet-a2b967fb'
+      ],
       protocol: 'HTTPS',
       certificate: 'arn:aws:acm:ap-southeast-2:000000000001:certificate/95898b22-e903-4d31-a50a-a0d4473aa077'
     }
@@ -66,6 +71,10 @@ describe('create a new cluster with HTTPS', () => {
 
     @test sets_protocol(){
       expect(this.cluster.protocol).to.eql(['HTTPS'])
+    }
+
+    @test sets_privateSubnets(){
+      expect(this.cluster.privateSubnets).to.eql(this.opts.privateSubnets)
     }
 
   }
