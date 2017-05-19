@@ -3,6 +3,7 @@ export declare class Cluster implements Resource {
     amiIds: any;
     clusterName: string;
     subnets: string;
+    privateSubnets: string;
     vpcId: string;
     certificate: string;
     protocol: Array<string>;

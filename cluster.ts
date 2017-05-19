@@ -21,6 +21,7 @@ export class Cluster implements Resource {
 
   public clusterName: string
   public subnets: string
+  public privateSubnets: string
   public vpcId: string
   public certificate: string
   public protocol: Array<string>
@@ -54,6 +55,10 @@ export class Cluster implements Resource {
     // we always need a vpc and at least one subnet
     this.vpcId = opts.vpcId || this.requireVpcId()
     this.subnets = opts.subnets || this.requireSubnets()
+
+    if (opts.privateSubnets) {
+      this.privateSubnets = opts.privateSubnets
+    }
 
     this.protocol = _.castArray(opts.protocol) || ['HTTP']
 
@@ -363,7 +368,7 @@ export class Cluster implements Resource {
           },
           'MaxSize': this.max_size,
           'MinSize': this.min_size,
-          'VPCZoneIdentifier': this.subnets,
+          'VPCZoneIdentifier': this.privateSubnets || this.subnets,
           'Tags': [
             {
               'Key': 'Origin',
