@@ -36,7 +36,7 @@ var Cluster = (function () {
         this.subnets = opts.subnets || this.requireSubnets();
         this.protocol = _.castArray(opts.protocol) || ['HTTP'];
         this.certificate = opts.certificate;
-        this.name = clusterName;
+        this.clusterName = clusterName;
         if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
             this.requireCertificate();
         }
@@ -72,9 +72,9 @@ var Cluster = (function () {
     Cluster.prototype.ami = function () {
         return this.amiIds[this.region];
     };
-    Object.defineProperty(Cluster.prototype, "clusterName", {
+    Object.defineProperty(Cluster.prototype, "name", {
         get: function () {
-            return this.name;
+            return this.clusterName;
         },
         enumerable: true,
         configurable: true
@@ -361,7 +361,7 @@ var Cluster = (function () {
                             'PropagateAtLaunch': true
                         }, {
                             'Key': 'Name',
-                            'Value': this.clusterName,
+                            'Value': this.name,
                             'PropagateAtLaunch': true
                         }
                     ]

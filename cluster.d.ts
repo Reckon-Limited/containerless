@@ -1,7 +1,7 @@
 import { Resource } from './resource';
 export declare class Cluster implements Resource {
     amiIds: any;
-    name: string;
+    clusterName: string;
     subnets: string;
     vpcId: string;
     certificate: string;
@@ -24,7 +24,7 @@ export declare class Cluster implements Resource {
     requireSubnets(): void;
     requireSecurityGroup(): void;
     ami(): any;
-    readonly clusterName: string;
+    readonly name: string;
     readonly id: string | {
         'Ref': string;
     };

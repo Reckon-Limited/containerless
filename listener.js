@@ -12,7 +12,7 @@ var Listener = (function () {
     Listener.prototype.calculatePriority = function () {
         return priority = priority + 1;
     };
-    Object.defineProperty(Listener.prototype, "listenerName", {
+    Object.defineProperty(Listener.prototype, "name", {
         get: function () {
             return this.service.name + "Listener";
         },

@@ -7,7 +7,7 @@ export declare class Listener implements Resource {
     priority: number;
     constructor(service: Service, cluster: Cluster);
     calculatePriority(): number;
-    readonly listenerName: string;
+    readonly name: string;
     readonly targetGroupName: string;
     readonly healthcheckPath: string;
     required(): number | "";
