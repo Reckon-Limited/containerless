@@ -30,6 +30,7 @@ describe('service with port and url', function () {
                 repository: 'blah/vtha',
                 tag: 'tag-1',
                 url: '/',
+                healthcheckPath: '/_health',
                 port: 1111
             };
         }
@@ -48,6 +49,10 @@ describe('service with port and url', function () {
             var result = _.get(this.resources, 'BlahVthaDevApp1Target.Type');
             chai_1.expect(result).to.eql('AWS::ElasticLoadBalancingV2::TargetGroup');
         };
+        ListenerTest.prototype.task_definition_resource_healthCheckPath = function () {
+            var result = _.get(this.resources, 'BlahVthaDevApp1Target.Properties.HealthCheckPath');
+            chai_1.expect(result).to.eql('/_health');
+        };
         ListenerTest.prototype.priority = function () {
             chai_1.expect(this.listener.priority).to.eql(2);
             var listener = new listener_1.Listener(this.service, this.cluster);
@@ -61,6 +66,9 @@ describe('service with port and url', function () {
     __decorate([
         mocha_typescript_1.test
     ], ListenerTest.prototype, "task_definition_resource_type", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ListenerTest.prototype, "task_definition_resource_healthCheckPath", null);
     __decorate([
         mocha_typescript_1.test
     ], ListenerTest.prototype, "priority", null);

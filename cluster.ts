@@ -19,7 +19,9 @@ export class Cluster implements Resource {
     'ca-central-1': 'ami-ee58e58a'
   }
 
+  public clusterName: string
   public subnets: string
+  public privateSubnets: string
   public vpcId: string
   public certificate: string
   public protocol: Array<string>
@@ -36,7 +38,7 @@ export class Cluster implements Resource {
   private size: number
   private max_memory_threshold: number
 
-  constructor(opts: any) {
+  constructor(opts: any, clusterName: string) {
     if (opts.id) {
       this._id = opts.id
       this._securityGroup = opts.security_group || this.requireSecurityGroup()
@@ -54,9 +56,14 @@ export class Cluster implements Resource {
     this.vpcId = opts.vpcId || this.requireVpcId()
     this.subnets = opts.subnets || this.requireSubnets()
 
+    if (opts.privateSubnets) {
+      this.privateSubnets = opts.privateSubnets
+    }
+
     this.protocol = _.castArray(opts.protocol) || ['HTTP']
 
     this.certificate = opts.certificate
+    this.clusterName = clusterName
 
     if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
       this.requireCertificate()
@@ -94,7 +101,7 @@ export class Cluster implements Resource {
   }
 
   get name() {
-    return 'Cluster';
+    return this.clusterName;
   }
 
   get id() {
@@ -361,11 +368,15 @@ export class Cluster implements Resource {
           },
           'MaxSize': this.max_size,
           'MinSize': this.min_size,
-          'VPCZoneIdentifier': this.subnets,
+          'VPCZoneIdentifier': this.privateSubnets || this.subnets,
           'Tags': [
             {
-              'Key' : 'Origin',
+              'Key': 'Origin',
               'Value': 'Containerless',
+              'PropagateAtLaunch': true
+            }, {
+              'Key': 'Name',
+              'Value': this.name,
               'PropagateAtLaunch': true
             }
           ]

@@ -44,6 +44,9 @@ describe('with an existing cluster and a load balanced container', function () {
         ServiceTest.prototype.service_name = function () {
             chai_1.expect(this.service.name).to.eql('BlahVthaDevApp1');
         };
+        ServiceTest.prototype.service_healthcheckPath = function () {
+            chai_1.expect(this.service.healthcheckPath).to.eql('/');
+        };
         ServiceTest.prototype.service_resource = function () {
             var result = _.get(this.resources, 'BlahVthaDevApp1.Type');
             chai_1.expect(result).to.eql('AWS::ECS::Service');
@@ -77,6 +80,9 @@ describe('with an existing cluster and a load balanced container', function () {
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_name", null);
+    __decorate([
+        mocha_typescript_1.test
+    ], ServiceTest.prototype, "service_healthcheckPath", null);
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_resource", null);
@@ -117,6 +123,7 @@ describe('new cluster and container without load balancer', function () {
                 service: 'blah-vtha-dev',
                 name: 'app-1',
                 repository: 'blah/vtha',
+                stage: 'production',
                 tag: 'tag-1',
             };
         }
@@ -125,8 +132,8 @@ describe('new cluster and container without load balancer', function () {
             this.service = new service_1.Service(cluster, this.opts);
             this.resources = this.service.generate();
         };
-        ServiceTest.prototype.service_name = function () {
-            chai_1.expect(this.service.name).to.eql('BlahVthaDevApp1');
+        ServiceTest.prototype.service_name_with_stage = function () {
+            chai_1.expect(this.service.name).to.eql('BlahVthaDevProductionApp1');
         };
         ServiceTest.prototype.service_load_balancers = function () {
             var result = _.get(this.resources, 'BlahVthaDevApp1.Properties.LoadBalancers');
@@ -144,7 +151,7 @@ describe('new cluster and container without load balancer', function () {
     }());
     __decorate([
         mocha_typescript_1.test
-    ], ServiceTest.prototype, "service_name", null);
+    ], ServiceTest.prototype, "service_name_with_stage", null);
     __decorate([
         mocha_typescript_1.test
     ], ServiceTest.prototype, "service_load_balancers", null);

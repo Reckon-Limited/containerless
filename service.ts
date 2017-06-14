@@ -6,11 +6,15 @@ import { Resource } from './resource'
 
 export class Service implements Resource {
 
+  private DEFAULT_HEALTHCHECK_PATH: string = '/'
+
   public port: number
   public url: string
+  public healthcheckPath: string
 
   private _name: string
   private _service: string
+  private _stage: string
 
   private cluster: Cluster
   private count: number
@@ -28,6 +32,7 @@ export class Service implements Resource {
     this.cluster = cluster;
 
     this._service = opts.service;
+    this._stage = opts.stage;
     this._name = opts.name;
     this.tag = opts.tag || this.requireTag();
     this.repository = opts.repository || this.requireRepository();
@@ -49,6 +54,7 @@ export class Service implements Resource {
 
     this.port = opts.port;
     this.url = opts.url;
+    this.healthcheckPath = opts.healthcheckPath || this.DEFAULT_HEALTHCHECK_PATH;
 
     if (this.port && !this.url) this.requireURL()
     if (this.url && !this.port) this.requirePort()
@@ -97,7 +103,9 @@ export class Service implements Resource {
   }
 
   get name() {
-    return _.chain(`${this._service}-${this._name}`).camelCase().upperFirst().value();
+    const serviceStage = this._stage ? `${this._service}-${this._stage}` : this._service;
+
+    return _.chain(`${serviceStage}-${this._name}`).camelCase().upperFirst().value();
   }
 
   generate() {

@@ -2,7 +2,7 @@ import * as _  from 'lodash';
 
 import { Cluster } from './cluster'
 import { Resource } from './resource'
-import { Service } from './Service'
+import { Service } from './service'
 
 // this is a terrible idea
 let priority = 0;
@@ -31,6 +31,10 @@ export class Listener implements Resource {
     return `${this.service.name}Target`;
   }
 
+  get healthcheckPath() {
+    return `${this.service.healthcheckPath}`;
+  }
+
   required() {
     return (this.service.url && this.service.port);
   }
@@ -44,7 +48,7 @@ export class Listener implements Resource {
         'Properties': {
           'Name': this.targetGroupName,
           'HealthCheckIntervalSeconds': 10,
-          'HealthCheckPath': '/',
+          'HealthCheckPath': this.healthcheckPath,
           'HealthCheckProtocol': 'HTTP',
           'HealthCheckTimeoutSeconds': 5,
           'HealthyThresholdCount': 2,

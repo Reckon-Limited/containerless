@@ -48,6 +48,10 @@ describe('with an existing cluster and a load balanced container', () => {
       expect(this.service.name).to.eql('BlahVthaDevApp1')
     }
 
+    @test service_healthcheckPath(){
+      expect(this.service.healthcheckPath).to.eql('/')
+    }
+
     @test service_resource(){
       let result = _.get(this.resources, 'BlahVthaDevApp1.Type');
       expect(result).to.eql('AWS::ECS::Service');
@@ -100,6 +104,7 @@ describe('new cluster and container without load balancer', () => {
       service: 'blah-vtha-dev',
       name: 'app-1',
       repository: 'blah/vtha',
+      stage: 'production',
       tag: 'tag-1',
     }
 
@@ -112,8 +117,8 @@ describe('new cluster and container without load balancer', () => {
       this.resources = this.service.generate()
     }
 
-    @test service_name(){
-      expect(this.service.name).to.eql('BlahVthaDevApp1')
+    @test service_name_with_stage(){
+      expect(this.service.name).to.eql('BlahVthaDevProductionApp1')
     }
 
     @test service_load_balancers(){

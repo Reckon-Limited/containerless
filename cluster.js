@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var Cluster = (function () {
-    function Cluster(opts) {
+    function Cluster(opts, clusterName) {
         // http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html
         this.amiIds = {
             'us-east-1': 'ami-275ffe31',
@@ -34,8 +34,12 @@ var Cluster = (function () {
         // we always need a vpc and at least one subnet
         this.vpcId = opts.vpcId || this.requireVpcId();
         this.subnets = opts.subnets || this.requireSubnets();
+        if (opts.privateSubnets) {
+            this.privateSubnets = opts.privateSubnets;
+        }
         this.protocol = _.castArray(opts.protocol) || ['HTTP'];
         this.certificate = opts.certificate;
+        this.clusterName = clusterName;
         if (!this.certificate && _.includes(this.protocol, 'HTTPS')) {
             this.requireCertificate();
         }
@@ -73,7 +77,7 @@ var Cluster = (function () {
     };
     Object.defineProperty(Cluster.prototype, "name", {
         get: function () {
-            return 'Cluster';
+            return this.clusterName;
         },
         enumerable: true,
         configurable: true
@@ -352,11 +356,15 @@ var Cluster = (function () {
                     },
                     'MaxSize': this.max_size,
                     'MinSize': this.min_size,
-                    'VPCZoneIdentifier': this.subnets,
+                    'VPCZoneIdentifier': this.privateSubnets || this.subnets,
                     'Tags': [
                         {
                             'Key': 'Origin',
                             'Value': 'Containerless',
+                            'PropagateAtLaunch': true
+                        }, {
+                            'Key': 'Name',
+                            'Value': this.name,
                             'PropagateAtLaunch': true
                         }
                     ]
