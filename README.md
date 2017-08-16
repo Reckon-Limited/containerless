@@ -158,6 +158,13 @@ cluster:
     - HTTPS
 ```
 
+If you use HTTPS, you will also need to add the ARN of a valid certificate to the cluster config.
+
+```
+cluster:
+  certificate: arn:aws:acm:region:account:certificate/id
+```
+
 Note: these are the end-user public facing ports, not the ports that are mounted by a docker image, these are mapped internally by the Cluster.
 
 
