@@ -11,7 +11,7 @@ Mappings:
     ca-central-1:
       AMIID: ami-1b01b37f
     eu-central-1:
-      AMIID: ami-38dc1157
+      AMIID: ami-10e6c8fb
     eu-west-1:
       AMIID: ami-e3fbd290
     eu-west-2:
